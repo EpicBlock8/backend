@@ -29,30 +29,12 @@ class Logging(BaseModel):
 
 
 class Paths(BaseModel):
-    docs: str
     logs: str
 
 
 class Endpoint(BaseModel):
-    ws_client: str
-
-    post_metric: str
-    get_metrics: str
-    get_metric_by_id: str
-
-    post_machine: str
-    get_machines: str
-    get_machine_by_id: str
-    get_machine_metrics_by_id: str
-    get_machine_metric_types_by_id: str
-    get_machine_event_types_by_id: str
-
-    get_machine_listener_by_id: str
-    post_machine_trigger_by_id: str
-
-    post_metric_type: str
-    get_metric_types: str
-    get_metric_type_by_id: str
+    # ws_client: str
+    ...
 
 
 class Network(BaseModel):
@@ -60,16 +42,12 @@ class Network(BaseModel):
     port: int
     reload: bool
 
-class Client(BaseModel):
-    measurements_per_second: int
-
 class Config(BaseModel):
     general: General
     paths: Paths
     logging: Logging
     endpoint: Endpoint
     network: Network
-    client: Client
 
 
 def load_config(
