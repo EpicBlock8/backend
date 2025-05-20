@@ -154,3 +154,4 @@ Desktop.ini
 
 # uv cache / artifacts (if any, good to ignore generally)
 .uv_cache/ 
+database.db
