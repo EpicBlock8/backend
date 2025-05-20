@@ -1,0 +1,45 @@
+[general]
+title = """
+ _____           _    _____     _       _        _____     _ _         _
+|  _  |___ ___  |_|  |     |___| |_ ___|_|___   |     |___| | |___ ___| |_ ___ ___
+|   __|  _| . | | |  | | | | -_|  _|  _| |  _|  |   --| . | | | -_|  _|  _| . |  _|
+|__|  |_| |___|_| |  |_|_|_|___|_| |_| |_|___|  |_____|___|_|_|___|___|_| |___|_|
+              |___|
+"""
+
+[logging]
+level = "INFO"
+
+[paths]
+docs = "docs"
+logs = "logs"
+
+[endpoint]
+ws_client = "/client_endpoint"
+
+post_metric = "/metrics"
+get_metrics = "/metrics"
+get_metric_by_id = "/metrics/{id}"
+
+post_metric_type = "/metric_types"
+get_metric_types = "/metric_types"
+get_metric_type_by_id = "/metric_types/{id}"
+
+post_machine = "/machines"
+get_machines = "/machines"
+get_machine_by_id = "/machines/{id}"
+get_machine_metrics_by_id = "/machines/{id}/metrics"
+get_machine_metric_types_by_id = "/machines/{id}/metric_types"
+get_machine_event_types_by_id = "/machines/{id}/event_types"
+
+get_machine_listener_by_id = "/machines/{id}/listen"
+post_machine_trigger_by_id = "/machines/{id}/trigger"
+
+[network]
+host = "127.0.0.1"
+port = 8000
+
+reload = true
+
+[client]
+measurements_per_second = 1
