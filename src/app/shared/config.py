@@ -1,15 +1,19 @@
 from logging import CRITICAL, DEBUG, ERROR, INFO, WARNING
 from os import PathLike
 from pathlib import Path
+from tomllib import load
 
 from pydantic import BaseModel, field_validator
-from tomllib import load
 
 DEFAULT_CONFIG_PATH = Path("config.toml")
 
 
 class General(BaseModel):
     title: str
+
+
+class Database(BaseModel):
+    path: str
 
 
 class Logging(BaseModel):
@@ -42,8 +46,10 @@ class Network(BaseModel):
     port: int
     reload: bool
 
+
 class Config(BaseModel):
     general: General
+    database: Database
     paths: Paths
     logging: Logging
     endpoint: Endpoint

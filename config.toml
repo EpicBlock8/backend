@@ -9,6 +9,9 @@ title = """
 ######### #############    #### #####     ###########     
 """
 
+[database]
+path = "sqlite:///database.db"
+
 [logging]
 level = "INFO"
 
