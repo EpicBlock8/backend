@@ -7,13 +7,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version-file: '.python-version'
+
       - name: Install uv
         run: pip install uv
+
       - name: Install dependencies
-        run: uv sync --frozen-lockfile
+        run: |
+          uv sync --frozen        # ignore stale lock file and just use it
+
       - name: Run tests
-        run: uv run pytest 
+        run: uv run pytest
