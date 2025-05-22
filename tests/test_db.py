@@ -1,7 +1,6 @@
 from sqlalchemy import Engine
 from sqlmodel import Session, SQLModel, create_engine
 
-from app.models.schema import User
 from app.shared.db import engine
 
 

@@ -1,14 +1,15 @@
+
 from pydantic import BaseModel
-from typing import List, Optional
+
 
 class signed_prekey_push(BaseModel):
     username: str
     signed_prekey_public: bytes
     signed_prekey_signature: bytes
-    
+
 class otp_prekey_push(BaseModel):
     username: str
-    pub_otps: List[bytes] # list of otp public keys
+    pub_otps: list[bytes] # list of otp public keys
 
 
 class GetPrekeyBundleRequest(BaseModel):
@@ -49,7 +50,6 @@ class GrabInitialMessagesRequest(BaseModel):
 
 
 class GrabInitialMessagesResponse(BaseModel):
-    messages: List[InitialMessage]
+    messages: list[InitialMessage]
 
 
-    

@@ -53,9 +53,9 @@ class MessageStore(SQLModel, table=True):
     f_username: str = Field(
         ..., foreign_key="user.username", description="Foreign key to User.username (recipient)"
     )
-    sharer_identity_key_public: bytes = Field(..., description="Sharer\'s public identity key")
-    eph_key: bytes = Field(..., description="Sharer\'s public ephemeral key")
+    sharer_identity_key_public: bytes = Field(..., description="Sharer's public identity key")
+    eph_key: bytes = Field(..., description="Sharer's public ephemeral key")
     e_dek: bytes = Field(..., description="Encrypted data encryption key")
-    otp_hash: bytes = Field(..., description="Hash of the recipient\'s OTP used for this message")
+    otp_hash: bytes = Field(..., description="Hash of the recipient's OTP used for this message")
 
     user: User | None = Relationship(back_populates="message_stores")

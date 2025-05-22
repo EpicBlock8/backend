@@ -1,12 +1,21 @@
-import logging
 import hashlib
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, create_engine, select
 
-from app.models.requests.x3dh import signed_prekey_push, otp_prekey_push, PrekeyBundleResponse, GetPrekeyBundleRequest, ShareFileRequest, ShareFileResponse, GrabInitialMessagesRequest, GrabInitialMessagesResponse, InitialMessage
 from app.models.requests import SignedPayload
-from app.models.schema import User, PrekeyBundle, Otp, MessageStore
+from app.models.requests.x3dh import (
+    GetPrekeyBundleRequest,
+    GrabInitialMessagesRequest,
+    GrabInitialMessagesResponse,
+    InitialMessage,
+    PrekeyBundleResponse,
+    ShareFileRequest,
+    ShareFileResponse,
+    otp_prekey_push,
+    signed_prekey_push,
+)
+from app.models.schema import MessageStore, Otp, PrekeyBundle, User
 from app.shared import Logger, load_config
 
 logger = Logger(__name__).get_logger()
@@ -50,14 +59,14 @@ async def otp_prekey_push(data=Depends(SignedPayload.unwrap(otp_prekey_push))):
     with Session(engine) as session:
         user = session.exec(select(User).where(User.username == data.username)).first()
         if not user:
-            raise HTTPException(status_code=404, detail="User not found") # double checking in case - 
+            raise HTTPException(status_code=404, detail="User not found") # double checking in case -
 
         for otp_key in data.pub_otps:
             new_otp = Otp(f_username=data.username, otp_val=otp_key)
             session.add(new_otp)
-        
+
         session.commit()
-        
+
 
     return {"message": "OTP prekey push received"}
 
@@ -164,7 +173,7 @@ async def grab_initial_messages(data=Depends(SignedPayload.unwrap(GrabInitialMes
             )
             # Delete the message from the server after fetching
             session.delete(record)
-        
+
         session.commit()
         logger.info(f"Retrieved and deleted {len(initial_messages)} initial messages for user: {data.username}")
 

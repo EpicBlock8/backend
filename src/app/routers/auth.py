@@ -1,10 +1,9 @@
-import logging
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, create_engine, select
 
-from app.models.requests.register_account import RegisterAccount
 from app.models.requests import SignedPayload
+from app.models.requests.register_account import RegisterAccount
 from app.models.schema import User
 from app.shared import Logger, load_config
 
