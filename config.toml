@@ -13,7 +13,7 @@ title = """
 path = "sqlite:///database.db"
 
 [logging]
-level = "INFO"
+level = "DEBUG"
 
 [paths]
 logs = "logs"

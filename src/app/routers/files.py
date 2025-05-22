@@ -9,7 +9,7 @@ from app.shared.http import server_error_handler
 
 from app.models.requests import DownloadFile
 
-logger = Logger(__name__, level=logging.DEBUG).get_logger()
+logger = Logger(__name__).get_logger()
 
 router = APIRouter()
 

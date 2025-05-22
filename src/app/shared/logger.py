@@ -12,7 +12,7 @@ config: Config = load_config()
 
 
 class Logger:
-    def __init__(self, name, log_file=config.paths.logs, level=logging.INFO):
+    def __init__(self, name, log_file=config.paths.logs, level=config.logging.level):
         Path(log_file).mkdir(parents=True, exist_ok=True)
         # Initialize colorama
         init()
