@@ -40,7 +40,7 @@ class Otp(SQLModel, table=True):
     f_username: str = Field(
         ..., foreign_key="user.username", description="Foreign key to User.username"
     )
-    otp_val: str = Field(..., description="One-time prekey value")
+    otp_val: bytes = Field(..., description="One-time prekey value")
     used: bool = Field(
         default=False, description="Flag indicating if the OTP has been used"
     )
@@ -51,10 +51,11 @@ class Otp(SQLModel, table=True):
 class MessageStore(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     f_username: str = Field(
-        ..., foreign_key="user.username", description="Foreign key to User.username"
+        ..., foreign_key="user.username", description="Foreign key to User.username (recipient)"
     )
-    eph_key: bytes = Field(..., description="Ephemeral encryption key")
+    sharer_identity_key_public: bytes = Field(..., description="Sharer\'s public identity key")
+    eph_key: bytes = Field(..., description="Sharer\'s public ephemeral key")
     e_dek: bytes = Field(..., description="Encrypted data encryption key")
-    otp_hash: bytes = Field(..., description="Hash of the OTP used for this message")
+    otp_hash: bytes = Field(..., description="Hash of the recipient\'s OTP used for this message")
 
     user: User | None = Relationship(back_populates="message_stores")
