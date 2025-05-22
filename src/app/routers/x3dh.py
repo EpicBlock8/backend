@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, create_engine, select
 
 from app.models.requests.x3dh import signed_prekey_push, otp_prekey_push, PrekeyBundleResponse, GetPrekeyBundleRequest, ShareFileRequest, ShareFileResponse, GrabInitialMessagesRequest, GrabInitialMessagesResponse, InitialMessage
+from app.models.requests import SignedPayload
 from app.models.schema import User, PrekeyBundle, Otp, MessageStore
 from app.shared import Logger, load_config
 
@@ -17,7 +18,7 @@ endpoint = config.endpoint
 engine = create_engine(config.database.path)
 
 @router.post("/x3dh/signed_prekey_push")
-async def signed_prekey_push(data: signed_prekey_push = Depends()):
+async def signed_prekey_push(data=Depends(SignedPayload.unwrap(signed_prekey_push))):
     logger.debug(data)
     with Session(engine) as session:
         user = session.exec(select(User).where(User.username == data.username)).first()
@@ -44,7 +45,7 @@ async def signed_prekey_push(data: signed_prekey_push = Depends()):
 
 
 @router.post("/x3dh/otp_prekey_push")
-async def otp_prekey_push(data: otp_prekey_push = Depends()):
+async def otp_prekey_push(data=Depends(SignedPayload.unwrap(otp_prekey_push))):
     logger.debug(data)
     with Session(engine) as session:
         user = session.exec(select(User).where(User.username == data.username)).first()
@@ -61,7 +62,7 @@ async def otp_prekey_push(data: otp_prekey_push = Depends()):
     return {"message": "OTP prekey push received"}
 
 @router.post("/x3dh/prekey_bundle", response_model=PrekeyBundleResponse)
-async def get_prekey_bundle(data: GetPrekeyBundleRequest = Depends()):
+async def get_prekey_bundle(data=Depends(SignedPayload.unwrap(GetPrekeyBundleRequest))):
     logger.debug(f"Fetching prekey bundle for user: {data.username}")
     with Session(engine) as session:
         user = session.exec(select(User).where(User.username == data.target_username)).first()
@@ -104,7 +105,7 @@ async def get_prekey_bundle(data: GetPrekeyBundleRequest = Depends()):
         )
 
 @router.post("/x3dh/share_file", response_model=ShareFileResponse)
-async def share_file(data: ShareFileRequest = Depends()):
+async def share_file(data=Depends(SignedPayload.unwrap(ShareFileRequest))):
     logger.debug(f"Sharing file from {data.sharer_username} to {data.recipient_username}")
     with Session(engine) as session:
         # Verify sharer exists
@@ -132,7 +133,7 @@ async def share_file(data: ShareFileRequest = Depends()):
         return ShareFileResponse(message="File shared successfully")
 
 @router.post("/x3dh/grab_initial_messages", response_model=GrabInitialMessagesResponse)
-async def grab_initial_messages(data: GrabInitialMessagesRequest = Depends()):
+async def grab_initial_messages(data=Depends(SignedPayload.unwrap(GrabInitialMessagesRequest))):
     logger.debug(f"Grabbing initial messages for user: {data.username}")
     with Session(engine) as session:
         # Verify user exists

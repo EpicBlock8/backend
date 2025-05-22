@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, create_engine, select
 
 from app.models.requests.register_account import RegisterAccount
+from app.models.requests import SignedPayload
 from app.models.schema import User
 from app.shared import Logger, load_config
 
@@ -17,7 +18,7 @@ engine = create_engine(config.database.path)
 
 
 @router.get("/auth/register")
-async def register(data: RegisterAccount = Depends()):
+async def register(data=Depends(SignedPayload.unwrap(RegisterAccount))):
     """
     input: master password
     derive: master chief using argon2id

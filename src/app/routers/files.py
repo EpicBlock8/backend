@@ -1,8 +1,6 @@
-import logging
-
 from fastapi import APIRouter, Depends
 
-from app.models.requests import DownloadFile
+from app.models.requests import DownloadFileRequest, SignedPayload
 from app.shared import Logger, load_config
 
 logger = Logger(__name__).get_logger()
@@ -13,8 +11,8 @@ config = load_config()
 endpoint = config.endpoint
 
 
-@router.get("/files/download")
-async def download_file(data: DownloadFile = Depends()):
+@router.post("/files/download")
+async def download_file(data=Depends(SignedPayload.unwrap(DownloadFileRequest))):  # noqa: B008
     """
     download_file
         sending UUID
@@ -26,9 +24,5 @@ async def download_file(data: DownloadFile = Depends()):
         decrypt DEK
         decrypt body
     """
-    data_copy = data.model_copy()
-    del data_copy["signature"]
-    logger.debug(data.model_dump_json())
-
-
-
+    print("RECEIVED Type:", type(data))
+    print("RECEIVED Data:", data)
