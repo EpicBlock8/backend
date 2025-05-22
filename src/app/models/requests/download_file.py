@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class DownloadFile(BaseModel):
+class DownloadFileRequest(BaseModel):
     uuid: str
 
 
