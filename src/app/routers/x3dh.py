@@ -63,7 +63,7 @@ async def otp_prekey_push(data=Depends(SignedPayload.unwrap(otp_prekey_push))):
 
 @router.post("/x3dh/prekey_bundle", response_model=PrekeyBundleResponse)
 async def get_prekey_bundle(data=Depends(SignedPayload.unwrap(GetPrekeyBundleRequest))):
-    logger.debug(f"Fetching prekey bundle for user: {data.username}")
+    logger.debug(f"Fetching prekey bundle for user: {data.target_username}")
     with Session(engine) as session:
         user = session.exec(select(User).where(User.username == data.target_username)).first()
         if not user:
@@ -75,9 +75,11 @@ async def get_prekey_bundle(data=Depends(SignedPayload.unwrap(GetPrekeyBundleReq
         if not prekey_bundle_db:
             raise HTTPException(status_code=404, detail="Prekey bundle not found for user")
 
-        # Fetch an unused OTP
+        # Fetch an unused OTP with row-level locking to prevent race conditions
         otp_record = session.exec(
-            select(Otp).where(Otp.f_username == data.target_username, Otp.used == False)
+            select(Otp)
+            .where(Otp.f_username == data.target_username, Otp.used == False)
+            .with_for_update()
         ).first()
 
         one_time_prekey_val = None
