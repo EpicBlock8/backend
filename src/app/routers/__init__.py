@@ -3,8 +3,9 @@
 # from .metrics import router as _metric_router
 
 # _routers = [_machine_router, _metric_types_router, _metric_router]
+from .files import router as files_router
 
-_routers = []
+_routers = [files_router]
 
 __all__ = ["get_routers"]
 
