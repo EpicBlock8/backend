@@ -1,13 +1,9 @@
 import logging
 
-from fastapi import APIRouter
-from sqlmodel import Session, select
-
-from app.shared import Logger, load_config
-from app.shared.db import engine
-from app.shared.http import server_error_handler
+from fastapi import APIRouter, Depends
 
 from app.models.requests import DownloadFile
+from app.shared import Logger, load_config
 
 logger = Logger(__name__).get_logger()
 
@@ -18,4 +14,21 @@ endpoint = config.endpoint
 
 
 @router.get("/files/download")
-def download_file(data: DownloadFile): ...
+def download_file(data: DownloadFile = Depends()):
+    """
+    download_file
+        sending UUID
+        ===============
+        verify signature
+        verify ability to access (are they owner / has it been shared?)
+        send encrypted file body.
+        ================
+        decrypt DEK
+        decrypt body
+    """
+    data_copy = data.model_copy()
+    del data_copy["signature"]
+    logger.debug(data.model_dump_json())
+
+
+
