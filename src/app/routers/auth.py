@@ -30,8 +30,6 @@ def register(data: RegisterAccount = Depends()):
     check if username is unique -> reject if not 403 not authorised
     persist to db
     """
-
-    data = data.model_copy()
     logger.debug(data)
 
     with Session(engine) as session:
@@ -47,8 +45,5 @@ def register(data: RegisterAccount = Depends()):
         session.add(new_user)
         session.commit()
         session.refresh(new_user)
-        return {"message": "User registered successfully", "user_id": new_user.id}
 
-
-
-
+    return {"message": "User registered successfully", "user_id": new_user.id}
