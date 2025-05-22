@@ -1,16 +1,20 @@
-import logging
+from fastapi import APIRouter, Depends
+from pydantic import BaseModel
 
-from fastapi import APIRouter
-from sqlmodel import Session, select
-
+from app.models.requests import SignedPayload
 from app.shared import Logger, load_config
-from app.shared.db import engine
-from app.shared.http import server_error_handler
 
-logger = Logger(__name__, level=logging.DEBUG).get_logger()
+logger = Logger(__name__).get_logger()
 
 router = APIRouter()
 
 config = load_config()
 endpoint = config.endpoint
 
+
+class MyEndpointRequest(BaseModel): ...
+
+
+@router.post(endpoint.my_endpoint)
+async def my_endpoint(data=Depends(SignedPayload.unwrap(MyEndpointRequest))):  # noqa: B008
+    ...
