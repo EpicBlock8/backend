@@ -17,7 +17,7 @@ engine = create_engine(config.database.path)
 
 
 @router.get("/auth/register")
-def register(data: RegisterAccount = Depends()):
+async def register(data: RegisterAccount = Depends()):
     """
     input: master password
     derive: master chief using argon2id

@@ -14,7 +14,7 @@ endpoint = config.endpoint
 
 
 @router.get("/files/download")
-def download_file(data: DownloadFile = Depends()):
+async def download_file(data: DownloadFile = Depends()):
     """
     download_file
         sending UUID

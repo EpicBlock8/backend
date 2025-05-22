@@ -17,7 +17,7 @@ endpoint = config.endpoint
 engine = create_engine(config.database.path)
 
 @router.post("/x3dh/signed_prekey_push")
-def signed_prekey_push(data: signed_prekey_push = Depends()):
+async def signed_prekey_push(data: signed_prekey_push = Depends()):
     logger.debug(data)
     with Session(engine) as session:
         user = session.exec(select(User).where(User.username == data.username)).first()
@@ -44,7 +44,7 @@ def signed_prekey_push(data: signed_prekey_push = Depends()):
 
 
 @router.post("/x3dh/otp_prekey_push")
-def otp_prekey_push(data: otp_prekey_push = Depends()):
+async def otp_prekey_push(data: otp_prekey_push = Depends()):
     logger.debug(data)
     with Session(engine) as session:
         user = session.exec(select(User).where(User.username == data.username)).first()
@@ -61,7 +61,7 @@ def otp_prekey_push(data: otp_prekey_push = Depends()):
     return {"message": "OTP prekey push received"}
 
 @router.post("/x3dh/prekey_bundle", response_model=PrekeyBundleResponse)
-def get_prekey_bundle(data: GetPrekeyBundleRequest = Depends()):
+async def get_prekey_bundle(data: GetPrekeyBundleRequest = Depends()):
     logger.debug(f"Fetching prekey bundle for user: {data.username}")
     with Session(engine) as session:
         user = session.exec(select(User).where(User.username == data.target_username)).first()
@@ -104,7 +104,7 @@ def get_prekey_bundle(data: GetPrekeyBundleRequest = Depends()):
         )
 
 @router.post("/x3dh/share_file", response_model=ShareFileResponse)
-def share_file(data: ShareFileRequest = Depends()):
+async def share_file(data: ShareFileRequest = Depends()):
     logger.debug(f"Sharing file from {data.sharer_username} to {data.recipient_username}")
     with Session(engine) as session:
         # Verify sharer exists
@@ -132,7 +132,7 @@ def share_file(data: ShareFileRequest = Depends()):
         return ShareFileResponse(message="File shared successfully")
 
 @router.post("/x3dh/grab_initial_messages", response_model=GrabInitialMessagesResponse)
-def grab_initial_messages(data: GrabInitialMessagesRequest = Depends()):
+async def grab_initial_messages(data: GrabInitialMessagesRequest = Depends()):
     logger.debug(f"Grabbing initial messages for user: {data.username}")
     with Session(engine) as session:
         # Verify user exists
