@@ -1,34 +1,71 @@
-import base64
 import json
+from collections.abc import Awaitable, Callable
+from typing import TypeVar
 
-from cryptography.exceptions import InvalidSignature
-from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from fastapi import HTTPException, Request
 from pydantic import BaseModel
 
+from app.core.verify import verify
+from app.shared import Logger
+
+logger = Logger(__name__).get_logger()
+
+T = TypeVar("T")
+
+
+def db_get_public_key(username: str):
+    # TODO: Replace with real public key retrieval logic
+    private_bytes = (b"hello world" * 3)[:32]
+    private_key = Ed25519PrivateKey.from_private_bytes(private_bytes)
+    public_key = private_key.public_key()
+    return public_key
+
 
 class SignedPayload(BaseModel):
-    payload: str  # minified JSON as a string
-    signature: str  # base64-encoded signature
+    payload: str  # JSON string payload (minified)
+    signature: str  # Hex-encoded signature
 
-    def verify_signature(self) -> None:
-        # Load the public key (replace this with your real key loading logic)
-        # COMMENT: insert code here to get your Ed25519PublicKey
-        public_key = Ed25519PublicKey.from_public_bytes(b"...")  # placeholder
+    @staticmethod
+    def unwrap(output_type: type[T]) -> Callable[[Request], Awaitable[T]]:
+        """
+        Factory method that returns an async function to:
+        - Parse a SignedPayload from the request
+        - Verify its signature
+        - Decode and load the payload as an instance of `output_type`
+        """
+        logger.debug(
+            "Creating unwrap handler for output type: %s", output_type.__name__
+        )
 
-        # Verify signature
-        signature = base64.b64decode(self.signature_)
-        try:
-            public_key.verify(signature, self.payload.encode("utf-8"))
-        except InvalidSignature as e:
-            raise HTTPException(status_code=400, detail="Invalid signature") from e
+        async def handler(request: Request) -> T:
+            logger.debug("Handling unwrap request.")
+            try:
+                body = await request.json()
+                logger.debug("Request JSON body parsed successfully.")
 
-async def parse_signed_payload(request: Request) -> DownloadFile:
-    try:
-        body = await request.json()
-        signed = SignedPayload(**body)
-        signed.verify_signature()
-        payload_data = json.loads(signed.payload)
-        return DownloadFile(**payload_data)
-    except (ValueError, json.JSONDecodeError) as e:
-        raise HTTPException(status_code=400, detail=f"Invalid payload: {e}")
+                signed = SignedPayload(**body)
+                public_key = db_get_public_key("")
+                verify(
+                    public_key=public_key,
+                    signature=signed.signature,
+                    data=signed.payload,
+                )
+
+                payload_data = json.loads(signed.payload)
+                logger.debug("Payload successfully decoded: %s", payload_data)
+
+                result = output_type(**payload_data)
+                logger.info(
+                    "Unwrapped payload into %s instance successfully.",
+                    output_type.__name__,
+                )
+                return result
+
+            except (ValueError, json.JSONDecodeError) as e:
+                logger.warning("Failed to unwrap payload: %s", e)
+                raise HTTPException(
+                    status_code=400, detail=f"Invalid payload: {e}"
+                ) from e
+
+        return handler
