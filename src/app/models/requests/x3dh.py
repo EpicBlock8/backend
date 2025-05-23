@@ -2,12 +2,12 @@
 from pydantic import BaseModel
 
 
-class signed_prekey_push(BaseModel):
+class SignedPrekeyPush(BaseModel):
     username: str
     signed_prekey_public: bytes
     signed_prekey_signature: bytes
 
-class otp_prekey_push(BaseModel):
+class OtpPrekeyPush(BaseModel):
     username: str
     pub_otps: list[bytes] # list of otp public keys
 

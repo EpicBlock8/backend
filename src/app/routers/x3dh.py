@@ -12,8 +12,8 @@ from app.models.requests.x3dh import (
     PrekeyBundleResponse,
     ShareFileRequest,
     ShareFileResponse,
-    otp_prekey_push,
-    signed_prekey_push,
+    OtpPrekeyPush,
+    SignedPrekeyPush,
 )
 from app.models.schema import MessageStore, Otp, PrekeyBundle, User
 from app.shared import Logger, load_config
@@ -27,7 +27,7 @@ endpoint = config.endpoint
 engine = create_engine(config.database.path)
 
 @router.post("/x3dh/signed_prekey_push")
-async def signed_prekey_push(data=Depends(SignedPayload.unwrap(signed_prekey_push))):
+async def signed_prekey_push(data=Depends(SignedPayload.unwrap(SignedPrekeyPush))):
     logger.debug(data)
     with Session(engine) as session:
         user = session.exec(select(User).where(User.username == data.username)).first()
@@ -54,7 +54,7 @@ async def signed_prekey_push(data=Depends(SignedPayload.unwrap(signed_prekey_pus
 
 
 @router.post("/x3dh/otp_prekey_push")
-async def otp_prekey_push(data=Depends(SignedPayload.unwrap(otp_prekey_push))):
+async def otp_prekey_push(data=Depends(SignedPayload.unwrap(OtpPrekeyPush))):
     logger.debug(data)
     with Session(engine) as session:
         user = session.exec(select(User).where(User.username == data.username)).first()
