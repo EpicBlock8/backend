@@ -17,6 +17,7 @@ level = "DEBUG"
 
 [paths]
 logs = "logs"
+files = "uploads"
 
 [endpoint]
 # ws_client = "/client_endpoint"
