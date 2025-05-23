@@ -25,9 +25,10 @@ def db_get_public_key(username: str):
 class SignedPayload(BaseModel):
     payload: str  # JSON string payload (minified)
     signature: str  # Base64-encoded signature
+    username: str  # Plaintext string of username
 
-    @staticmethod
-    def unwrap(output_type: type[T]) -> Callable[[Request], Awaitable[T]]:
+    @classmethod
+    def unwrap(cls, output_type: type[T]) -> Callable[[Request], Awaitable[T]]:
         """
         Factory method that returns an async function to:
         - Parse a SignedPayload from the request
@@ -44,8 +45,8 @@ class SignedPayload(BaseModel):
                 body = await request.json()
                 logger.debug("Request JSON body parsed successfully.")
 
-                signed = SignedPayload(**body)
-                public_key = db_get_public_key("")
+                signed = cls(**body)
+                public_key = db_get_public_key(signed.username)
                 try:
                     verify(
                         public_key=public_key,
@@ -53,6 +54,7 @@ class SignedPayload(BaseModel):
                         data=signed.payload,
                     )
                 except HTTPException as e:
+                    # TODO: DO NOT PUSH TO PROD OR I WILL KILL SOMEONE
                     logger.warning(
                         "Signature verification failed (IGNORING DEBUG!! DO NOT USE IN PROD): %s",
                         e,

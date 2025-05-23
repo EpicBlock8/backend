@@ -33,7 +33,7 @@ def sign_payload(payload_dict, private_key):
     signature_bytes = private_key.sign(payload_bytes)
     signature_b64 = base64.b64encode(signature_bytes).decode()
 
-    return {"payload": payload_json, "signature": signature_b64}
+    return {"payload": payload_json, "signature": signature_b64, "username": "i_am_cat"}
 
 
 def test_file_upload(private_key):

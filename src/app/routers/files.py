@@ -106,7 +106,9 @@ async def upload_file(
 
 
 @router.post("/files/download")
-async def download_file(data=Depends(SignedPayload.unwrap(DownloadFileRequest))):  # noqa: B008
+async def download_file(
+    data: DownloadFileRequest = Depends(SignedPayload.unwrap(DownloadFileRequest)),  # noqa: B008
+):
     """
     Download a file by UUID.
     Verifies user has access to the file (owner or shared with them).
