@@ -2,6 +2,10 @@ from datetime import datetime
 
 from sqlmodel import Field, Relationship, SQLModel
 
+# TODO - we need to do some stuff to do authentication
+# dont let people download
+# do revocation from a crypto + database perspective (maybe optional)
+
 
 class User(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
@@ -12,6 +16,15 @@ class User(SQLModel, table=True):
     prekey_bundles: list["PrekeyBundle"] = Relationship(back_populates="user")
     otps: list["Otp"] = Relationship(back_populates="user")
     message_stores: list["MessageStore"] = Relationship(back_populates="user")
+    owned_files: list["File"] = Relationship(back_populates="owner")
+    shared_files: list["FileShare"] = Relationship(
+        back_populates="owner",
+        sa_relationship_kwargs={"foreign_keys": "FileShare.owner_username"}
+    )
+    received_files: list["FileShare"] = Relationship(
+        back_populates="recipient", 
+        sa_relationship_kwargs={"foreign_keys": "FileShare.recipient_username"}
+    )
 
 
 class File(SQLModel, table=True):
@@ -22,6 +35,45 @@ class File(SQLModel, table=True):
     file_name: str = Field(..., description="Original name of the file")
     size: int = Field(..., description="Size of the file in bytes")
     date_created: datetime = Field(..., description="Timestamp when file was created")
+    owner_username: str = Field(
+        ..., foreign_key="user.username", description="Username of the file owner"
+    )
+
+    # Relationships
+    owner: User | None = Relationship(back_populates="owned_files")
+    shares: list["FileShare"] = Relationship(back_populates="file")
+
+
+class FileShare(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    file_uuid: str = Field(
+        ..., foreign_key="file.uuid", description="UUID of the shared file"
+    )
+    owner_username: str = Field(
+        ..., foreign_key="user.username", description="Username of the file owner"
+    )
+    recipient_username: str = Field(
+        ..., foreign_key="user.username", description="Username of the recipient"
+    )
+    shared_at: datetime = Field(
+        default_factory=datetime.utcnow, 
+        description="Timestamp when file was shared"
+    )
+    revoked: bool = Field(
+        default=False, 
+        description="Flag indicating if access has been revoked"
+    )
+
+    # Relationships
+    file: File | None = Relationship(back_populates="shares")
+    owner: User | None = Relationship(
+        back_populates="shared_files",
+        sa_relationship_kwargs={"foreign_keys": "FileShare.owner_username"}
+    )
+    recipient: User | None = Relationship(
+        back_populates="received_files",
+        sa_relationship_kwargs={"foreign_keys": "FileShare.recipient_username"}
+    )
 
 
 class PrekeyBundle(SQLModel, table=True):
