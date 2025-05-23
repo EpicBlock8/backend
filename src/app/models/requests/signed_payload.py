@@ -26,8 +26,8 @@ class SignedPayload(BaseModel):
     payload: str  # JSON string payload (minified)
     signature: str  # Base64-encoded signature
 
-    @staticmethod
-    def unwrap(output_type: type[T]) -> Callable[[Request], Awaitable[T]]:
+    @classmethod
+    def unwrap(cls, output_type: type[T]) -> Callable[[Request], Awaitable[T]]:
         """
         Factory method that returns an async function to:
         - Parse a SignedPayload from the request
@@ -44,7 +44,7 @@ class SignedPayload(BaseModel):
                 body = await request.json()
                 logger.debug("Request JSON body parsed successfully.")
 
-                signed = SignedPayload(**body)
+                signed = cls(**body)
                 public_key = db_get_public_key("")
                 try:
                     verify(
