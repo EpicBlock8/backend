@@ -1,4 +1,3 @@
-
 from pydantic import BaseModel
 
 
@@ -7,9 +6,10 @@ class SignedPrekeyPush(BaseModel):
     signed_prekey_public: str
     signed_prekey_signature: str
 
+
 class OtpPrekeyPush(BaseModel):
     username: str
-    pub_otps: list[str] # list of otp public keys
+    pub_otps: list[str]  # list of otp public keys
 
 
 class GetPrekeyBundleRequest(BaseModel):
@@ -24,6 +24,7 @@ class PrekeyBundleResponse(BaseModel):
     one_time_prekey: str
     one_time_prekey_hash: str
 
+
 class InitialMessage(BaseModel):
     sharer_identity_key_public: str
     sharer_ephemeral_key_public: str
@@ -37,5 +38,3 @@ class GrabInitialMessagesRequest(BaseModel):
 
 class GrabInitialMessagesResponse(BaseModel):
     messages: list[InitialMessage]
-
-

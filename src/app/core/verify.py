@@ -1,4 +1,5 @@
 import base64
+
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives.asymmetric.ed25519 import (
     Ed25519PublicKey,

@@ -19,11 +19,11 @@ class User(SQLModel, table=True):
     owned_files: list["File"] = Relationship(back_populates="owner")
     shared_files: list["FileShare"] = Relationship(
         back_populates="owner",
-        sa_relationship_kwargs={"foreign_keys": "FileShare.owner_username"}
+        sa_relationship_kwargs={"foreign_keys": "FileShare.owner_username"},
     )
     received_files: list["FileShare"] = Relationship(
-        back_populates="recipient", 
-        sa_relationship_kwargs={"foreign_keys": "FileShare.recipient_username"}
+        back_populates="recipient",
+        sa_relationship_kwargs={"foreign_keys": "FileShare.recipient_username"},
     )
 
 
@@ -56,23 +56,21 @@ class FileShare(SQLModel, table=True):
         ..., foreign_key="user.username", description="Username of the recipient"
     )
     shared_at: datetime = Field(
-        default_factory=datetime.utcnow, 
-        description="Timestamp when file was shared"
+        default_factory=datetime.utcnow, description="Timestamp when file was shared"
     )
     revoked: bool = Field(
-        default=False, 
-        description="Flag indicating if access has been revoked"
+        default=False, description="Flag indicating if access has been revoked"
     )
 
     # Relationships
     file: File | None = Relationship(back_populates="shares")
     owner: User | None = Relationship(
         back_populates="shared_files",
-        sa_relationship_kwargs={"foreign_keys": "FileShare.owner_username"}
+        sa_relationship_kwargs={"foreign_keys": "FileShare.owner_username"},
     )
     recipient: User | None = Relationship(
         back_populates="received_files",
-        sa_relationship_kwargs={"foreign_keys": "FileShare.recipient_username"}
+        sa_relationship_kwargs={"foreign_keys": "FileShare.recipient_username"},
     )
 
 
@@ -103,11 +101,17 @@ class Otp(SQLModel, table=True):
 class MessageStore(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     f_username: str = Field(
-        ..., foreign_key="user.username", description="Foreign key to User.username (recipient)"
+        ...,
+        foreign_key="user.username",
+        description="Foreign key to User.username (recipient)",
     )
-    sharer_identity_key_public: bytes = Field(..., description="Sharer's public identity key")
+    sharer_identity_key_public: bytes = Field(
+        ..., description="Sharer's public identity key"
+    )
     eph_key: bytes = Field(..., description="Sharer's public ephemeral key")
     e_dek: bytes = Field(..., description="Encrypted data encryption key")
-    otp_hash: bytes = Field(..., description="Hash of the recipient's OTP used for this message")
+    otp_hash: bytes = Field(
+        ..., description="Hash of the recipient's OTP used for this message"
+    )
 
     user: User | None = Relationship(back_populates="message_stores")

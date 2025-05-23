@@ -53,7 +53,10 @@ class SignedPayload(BaseModel):
                         data=signed.payload,
                     )
                 except HTTPException as e:
-                    logger.warning("Signature verification failed (IGNORING DEBUG!! DO NOT USE IN PROD): %s", e)
+                    logger.warning(
+                        "Signature verification failed (IGNORING DEBUG!! DO NOT USE IN PROD): %s",
+                        e,
+                    )
                     # raise HTTPException(status_code=400, detail="Invalid signature") from e
 
                 payload_data = json.loads(signed.payload)

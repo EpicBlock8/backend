@@ -1,5 +1,7 @@
 import base64
+
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import JSONResponse
 from sqlmodel import Session, create_engine, select
 
 from app.models.requests import SignedPayload
@@ -34,7 +36,9 @@ async def register(data=Depends(SignedPayload.unwrap(RegisterAccount))):
 
     with Session(engine) as session:
         # Check if username is unique
-        existing_user = session.exec(select(User).where(User.username == data.username)).first()
+        existing_user = session.exec(
+            select(User).where(User.username == data.username)
+        ).first()
         if existing_user:
             raise HTTPException(status_code=403, detail="Username already exists")
 
@@ -47,4 +51,6 @@ async def register(data=Depends(SignedPayload.unwrap(RegisterAccount))):
         session.commit()
         session.refresh(new_user)
 
-    return {"message": "User registered successfully", "user_id": new_user.id}
+    return JSONResponse(
+        content={"message": "User registered successfully", "user_id": new_user.id}
+    )
