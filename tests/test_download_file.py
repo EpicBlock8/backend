@@ -17,7 +17,11 @@ def sign_packet(payload: BaseModel) -> SignedPayload:
     payload_json_bytes: bytes = payload_json.encode()
     signature_bytes: bytes = private_key.sign(payload_json_bytes)
     signature_hex: str = signature_bytes.hex()
-    return SignedPayload(payload=payload_json, signature=signature_hex)
+    return SignedPayload(
+        payload=payload_json,
+        signature=signature_hex,
+        username="i_am_cat",
+    )
 
 
 def test_download_file():
