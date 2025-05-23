@@ -5,12 +5,12 @@ from sqlmodel import Session, create_engine, select
 from app.models.requests import SignedPayload
 from app.models.requests.x3dh import (
     GetPrekeyBundleRequest,
-    GrabInitialMessagesRequest,
-    GrabInitialMessagesResponse,
-    InitialMessage,
+    GrabReturnMessages,
+    ReturnMessage,
     OtpPrekeyPush,
     PrekeyBundleResponse,
     SignedPrekeyPush,
+    GrabReturnMessagesRequest,
 )
 from app.models.schema import MessageStore, Otp, PrekeyBundle, User
 from app.shared import Logger, load_config
@@ -128,10 +128,10 @@ async def get_prekey_bundle(data=Depends(SignedPayload.unwrap(GetPrekeyBundleReq
 
 
 @router.post(
-    "/x3dh/grab_initial_messages", response_model=GrabInitialMessagesResponse
-)  # TODO change to return message
-async def grab_initial_messages(
-    data=Depends(SignedPayload.unwrap(GrabInitialMessagesRequest)),
+    "/x3dh/grab_return_messages", response_model=GrabReturnMessages
+) 
+async def grab_return_messages(
+    data=Depends(SignedPayload.unwrap(GrabReturnMessagesRequest)),
 ):
     logger.debug("Grabbing initial messages for user: %s", data.username)
     with Session(engine) as session:
@@ -149,12 +149,12 @@ async def grab_initial_messages(
 
         if not message_records:
             logger.info("No initial messages found for user: %s", data.username)
-            return GrabInitialMessagesResponse(messages=[])
+            return GrabReturnMessages(messages=[])
 
-        initial_messages = []
+        return_messages = []
         for record in message_records:
-            initial_messages.append(
-                InitialMessage(
+            return_messages.append(
+                ReturnMessage(
                     sharer_identity_key_public=record.sharer_identity_key_public,
                     sharer_ephemeral_key_public=record.eph_key,
                     otp_hash=record.otp_hash,  # sha-256 hash of the otp
@@ -166,7 +166,7 @@ async def grab_initial_messages(
 
         session.commit()
         logger.info(
-            "Retrieved and deleted %s initial messages for user: %s", len(initial_messages), data.username
+            "Retrieved and deleted %s initial messages for user: %s", len(return_messages), data.username
         )
 
-        return GrabInitialMessagesResponse(messages=initial_messages)
+        return GrabReturnMessages(messages=return_messages)

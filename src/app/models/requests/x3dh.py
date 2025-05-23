@@ -25,16 +25,16 @@ class PrekeyBundleResponse(BaseModel):
     one_time_prekey_hash: str
 
 
-class InitialMessage(BaseModel):
+class ReturnMessage(BaseModel):
     sharer_identity_key_public: str
     sharer_ephemeral_key_public: str
     otp_hash: str
     encrypted_dek: str
 
 
-class GrabInitialMessagesRequest(BaseModel):
+class GrabReturnMessagesRequest(BaseModel):
     username: str
 
 
-class GrabInitialMessagesResponse(BaseModel):
-    messages: list[InitialMessage]
+class GrabReturnMessages(BaseModel):
+    messages: list[ReturnMessage]

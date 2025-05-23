@@ -3,8 +3,8 @@ from .register_account import RegisterAccount
 from .signed_payload import SignedPayload
 from .x3dh import (
     GetPrekeyBundleRequest,
-    GrabInitialMessagesRequest,
-    GrabInitialMessagesResponse,
+    GrabReturnMessagesRequest,
+    GrabReturnMessages  ,
     InitialMessage,
     OtpPrekeyPush,
     PrekeyBundleResponse,
@@ -14,8 +14,8 @@ from .x3dh import (
 __all__ = [
     "DownloadFileRequest",
     "GetPrekeyBundleRequest",
-    "GrabInitialMessagesRequest",
-    "GrabInitialMessagesResponse",
+    "GrabReturnMessagesRequest",
+    "GrabReturnMessages",
     "InitialMessage",
     "OtpPrekeyPush",
     "PrekeyBundleResponse",
