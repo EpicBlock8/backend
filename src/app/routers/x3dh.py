@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
-from sqlmodel import Session, create_engine, select
+from sqlmodel import Session, select
 
 from app.models.requests import SignedPayload
 from app.models.requests.x3dh import (
@@ -15,6 +15,7 @@ from app.models.requests.x3dh import (
 from app.models.schema import MessageStore, Otp, PrekeyBundle, User
 from app.shared import Logger, load_config
 from app.shared.db import engine
+
 logger = Logger(__name__).get_logger()
 
 router = APIRouter()

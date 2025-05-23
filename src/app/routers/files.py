@@ -15,6 +15,7 @@ from app.models.requests import (
 from app.models.requests.files import ShareFileRequest
 from app.models.schema import File, FileShare, MessageStore, User
 from app.shared import Logger, load_config
+from app.shared.db import engine
 
 logger = Logger(__name__).get_logger()
 
@@ -22,7 +23,6 @@ router = APIRouter()
 
 config = load_config()
 endpoint = config.endpoint
-from app.shared.db import engine
 
 # Create uploads directory if it doesn't exist
 uploads_dir = Path(config.paths.files)
