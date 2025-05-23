@@ -4,8 +4,7 @@ from .signed_payload import SignedPayload
 from .x3dh import (
     GetPrekeyBundleRequest,
     GrabReturnMessagesRequest,
-    GrabReturnMessages  ,
-    InitialMessage,
+    GrabReturnMessages,
     OtpPrekeyPush,
     PrekeyBundleResponse,
     SignedPrekeyPush,
@@ -16,7 +15,6 @@ __all__ = [
     "GetPrekeyBundleRequest",
     "GrabReturnMessagesRequest",
     "GrabReturnMessages",
-    "InitialMessage",
     "OtpPrekeyPush",
     "PrekeyBundleResponse",
     "RegisterAccount",
