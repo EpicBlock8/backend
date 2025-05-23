@@ -34,6 +34,7 @@ class Logging(BaseModel):
 
 class Paths(BaseModel):
     logs: str
+    files: str
 
 
 class Endpoint(BaseModel):

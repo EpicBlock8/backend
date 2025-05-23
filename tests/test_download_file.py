@@ -22,7 +22,7 @@ def sign_packet(payload: BaseModel) -> SignedPayload:
 
 def test_download_file():
     # This just shouldnt crash
-    payload = DownloadFileRequest(uuid="i am a uuid")
+    payload = DownloadFileRequest(uuid="i am a uuid", username="test_user")
     payload_signed = sign_packet(payload)
     print("THIS IS OUR PAYLOAD BEFORE SENDING:", payload_signed)
 

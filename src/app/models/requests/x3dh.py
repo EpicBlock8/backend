@@ -24,20 +24,6 @@ class PrekeyBundleResponse(BaseModel):
     one_time_prekey: bytes
     one_time_prekey_hash: bytes
 
-
-class ShareFileRequest(BaseModel):
-    sharer_username: str
-    recipient_username: str
-    sharer_identity_key_public: bytes # Alice's public iKEK
-    sharer_ephemeral_key_public: bytes # Ephemeral key (random key that Alice generated during the secret derivation step)
-    otp_hash: bytes # Hash of the Bob's OT PreKey
-    encrypted_dek: bytes # eDEK (encrypted DEK)
-
-
-class ShareFileResponse(BaseModel):
-    message: str
-
-
 class InitialMessage(BaseModel):
     sharer_identity_key_public: bytes
     sharer_ephemeral_key_public: bytes

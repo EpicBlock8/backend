@@ -9,10 +9,8 @@ from app.models.requests.x3dh import (
     GrabInitialMessagesRequest,
     GrabInitialMessagesResponse,
     InitialMessage,
-    PrekeyBundleResponse,
-    ShareFileRequest,
-    ShareFileResponse,
     OtpPrekeyPush,
+    PrekeyBundleResponse,
     SignedPrekeyPush,
 )
 from app.models.schema import MessageStore, Otp, PrekeyBundle, User
@@ -25,6 +23,8 @@ router = APIRouter()
 config = load_config()
 endpoint = config.endpoint
 engine = create_engine(config.database.path)
+
+# TODO: make pq, and see if there is a way to do limited client-syncing
 
 @router.post("/x3dh/signed_prekey_push")
 async def signed_prekey_push(data=Depends(SignedPayload.unwrap(SignedPrekeyPush))):
@@ -112,38 +112,9 @@ async def get_prekey_bundle(data=Depends(SignedPayload.unwrap(GetPrekeyBundleReq
             signed_prekey=prekey_bundle_db.prekey,
             signed_prekey_signature=prekey_bundle_db.sig_prekey,
             one_time_prekey=one_time_prekey_val,
-            one_time_prekey_hash=otp_hash
         )
 
-@router.post("/x3dh/share_file", response_model=ShareFileResponse)
-async def share_file(data=Depends(SignedPayload.unwrap(ShareFileRequest))):
-    logger.debug(f"Sharing file from {data.sharer_username} to {data.recipient_username}")
-    with Session(engine) as session:
-        # Verify sharer exists
-        sharer = session.exec(select(User).where(User.username == data.sharer_username)).first()
-        if not sharer:
-            raise HTTPException(status_code=404, detail=f"Sharer {data.sharer_username} not found")
-
-        # Verify recipient exists
-        recipient = session.exec(select(User).where(User.username == data.recipient_username)).first()
-        if not recipient:
-            raise HTTPException(status_code=404, detail=f"Recipient {data.recipient_username} not found")
-
-        # Store the initial message for the recipient
-        new_message = MessageStore(
-            f_username=data.recipient_username,
-            sharer_identity_key_public=data.sharer_identity_key_public,
-            eph_key=data.sharer_ephemeral_key_public,
-            otp_hash=data.otp_hash,
-            e_dek=data.encrypted_dek,
-        )
-        session.add(new_message)
-        session.commit()
-        logger.info(f"Initial message stored for {data.recipient_username} from {data.sharer_username}")
-
-        return ShareFileResponse(message="File shared successfully")
-
-@router.post("/x3dh/grab_initial_messages", response_model=GrabInitialMessagesResponse)
+@router.post("/x3dh/grab_initial_messages", response_model=GrabInitialMessagesResponse) # TODO change to return message
 async def grab_initial_messages(data=Depends(SignedPayload.unwrap(GrabInitialMessagesRequest))):
     logger.debug(f"Grabbing initial messages for user: {data.username}")
     with Session(engine) as session:
@@ -167,7 +138,7 @@ async def grab_initial_messages(data=Depends(SignedPayload.unwrap(GrabInitialMes
                 InitialMessage(
                     sharer_identity_key_public=record.sharer_identity_key_public,
                     sharer_ephemeral_key_public=record.eph_key,
-                    otp_hash=record.otp_hash,
+                    otp_hash=record.otp_hash, # sha-256 hash of the otp
                     encrypted_dek=record.e_dek,
                 )
             )
