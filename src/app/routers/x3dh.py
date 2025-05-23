@@ -14,14 +14,13 @@ from app.models.requests.x3dh import (
 )
 from app.models.schema import MessageStore, Otp, PrekeyBundle, User
 from app.shared import Logger, load_config
-
+from app.shared.db import engine
 logger = Logger(__name__).get_logger()
 
 router = APIRouter()
 
 config = load_config()
 endpoint = config.endpoint
-engine = create_engine(config.database.path)
 
 # TODO: make pq, and see if there is a way to do limited client-syncing
 

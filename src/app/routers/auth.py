@@ -2,12 +2,13 @@ import base64
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
-from sqlmodel import Session, create_engine, select
+from sqlmodel import Session, select
 
 from app.models.requests import SignedPayload
 from app.models.requests.register_account import RegisterAccount
 from app.models.schema import User
 from app.shared import Logger, load_config
+from app.shared.db import engine
 
 logger = Logger(__name__).get_logger()
 
@@ -15,8 +16,6 @@ router = APIRouter()
 
 config = load_config()
 endpoint = config.endpoint
-engine = create_engine(config.database.path)
-
 
 @router.get("/auth/register")
 async def register(data=Depends(SignedPayload.unwrap(RegisterAccount))):

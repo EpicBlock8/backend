@@ -4,7 +4,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse, JSONResponse
-from sqlmodel import Session, create_engine, select
+from sqlmodel import Session, select
 
 from app.models.requests import (
     DownloadFileRequest,
@@ -22,7 +22,7 @@ router = APIRouter()
 
 config = load_config()
 endpoint = config.endpoint
-engine = create_engine(config.database.path)
+from app.shared.db import engine
 
 # Create uploads directory if it doesn't exist
 uploads_dir = Path(config.paths.files)
