@@ -1,4 +1,4 @@
-
+import base64
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, create_engine, select
 
@@ -41,7 +41,8 @@ async def register(data=Depends(SignedPayload.unwrap(RegisterAccount))):
         # Persist to db
         # Assuming RegisterAccount has 'username' and 'public_key' attributes
         # based on the schema.py and common practice.
-        new_user = User(username=data.username, public_key=data.public_key)
+        public_key_bytes = base64.b64decode(data.public_key)
+        new_user = User(username=data.username, public_key=public_key_bytes)
         session.add(new_user)
         session.commit()
         session.refresh(new_user)
