@@ -27,7 +27,7 @@ engine = create_engine(config.database.path)
 # Create uploads directory if it doesn't exist
 uploads_dir = Path(config.paths.files)
 uploads_dir.mkdir(exist_ok=True)
-logger.info(f"Files will be stored in: {uploads_dir.absolute()}")
+logger.info("Files will be stored in: %s", uploads_dir.absolute())
 
 
 @router.post("/files/upload", response_model=UploadFileResponse)
@@ -44,7 +44,7 @@ async def upload_file(
     - file_content_b64: Base64 encoded file content
     """
     logger.debug(
-        f"Uploading file: {data.file_name} for user: {data.username}, UUID: {data.uuid}"
+        "Uploading file: %s for user: %s, UUID: %s", data.file_name, data.username, data.uuid
     )
 
     with Session(engine) as session:
@@ -67,11 +67,11 @@ async def upload_file(
             file_content = base64.b64decode(data.file_content_b64)
             file_size = len(file_content)
             logger.info(
-                f"Decoded {file_size} bytes from Base64 input for file: {data.file_name}"
+                "Decoded %s bytes from Base64 input for file: %s", file_size, data.file_name
             )
         except Exception as e:
-            logger.error(f"Failed to decode Base64 content: {e}")
-            raise HTTPException(status_code=400, detail="Invalid Base64 content")
+            logger.error("Failed to decode Base64 content: %s", e)
+            raise HTTPException(status_code=400, detail="Invalid Base64 content") from e
 
         # Create file path using UUID
         file_path = uploads_dir / f"{data.uuid}"
@@ -80,10 +80,10 @@ async def upload_file(
         try:
             with open(file_path, "wb") as f:
                 f.write(file_content)
-            logger.info(f"File saved to: {file_path}")
+            logger.info("File saved to: %s", file_path)
         except Exception as e:
-            logger.error(f"Failed to save file to disk: {e}")
-            raise HTTPException(status_code=500, detail="Failed to save file")
+            logger.error("Failed to save file to disk: %s", e)
+            raise HTTPException(status_code=500, detail="Failed to save file") from e
 
         # Create database record
         new_file = File(
@@ -99,7 +99,7 @@ async def upload_file(
         session.refresh(new_file)
 
         logger.info(
-            f"File upload completed: {data.file_name} ({file_size} bytes) for user {data.username}"
+            "File upload completed: %s (%s bytes) for user %s", data.file_name, file_size, data.username
         )
 
     return JSONResponse(content={"message": "File uploaded successfully"})
@@ -112,7 +112,7 @@ async def download_file(data=Depends(SignedPayload.unwrap(DownloadFileRequest)))
     Verifies user has access to the file (owner or shared with them).
     Returns the encrypted file content.
     """
-    logger.debug(f"Download request for UUID: {data.uuid} by user: {data.username}")
+    logger.debug("Download request for UUID: %s by user: %s", data.uuid, data.username)
 
     with Session(engine) as session:
         # Verify user exists
@@ -135,7 +135,7 @@ async def download_file(data=Depends(SignedPayload.unwrap(DownloadFileRequest)))
         # Check if user is the owner
         if file.owner_username == data.username:
             has_access = True
-            logger.info(f"Access granted: {data.username} is owner of file {data.uuid}")
+            logger.info("Access granted: %s is owner of file %s", data.username, data.uuid)
         else:
             # Check if file has been shared with this user
             file_share = session.exec(
@@ -149,12 +149,12 @@ async def download_file(data=Depends(SignedPayload.unwrap(DownloadFileRequest)))
             if file_share:
                 has_access = True
                 logger.info(
-                    f"Access granted: file {data.uuid} shared with {data.username}"
+                    "Access granted: file %s shared with %s", data.uuid, data.username
                 )
 
         if not has_access:
             logger.warning(
-                f"Access denied: {data.username} cannot access file {data.uuid}"
+                "Access denied: %s cannot access file %s", data.username, data.uuid
             )
             raise HTTPException(
                 status_code=403,
@@ -164,10 +164,10 @@ async def download_file(data=Depends(SignedPayload.unwrap(DownloadFileRequest)))
         # Check if file exists on disk
         file_path = uploads_dir / f"{data.uuid}"
         if not file_path.exists():
-            logger.error(f"File not found on disk: {file_path}")
+            logger.error("File not found on disk: %s", file_path)
             raise HTTPException(status_code=404, detail="File not found on disk")
 
-        logger.info(f"Serving file {file.file_name} to {data.username}")
+        logger.info("Serving file %s to %s", file.file_name, data.username)
 
         # Return file as download
         return FileResponse(
@@ -180,7 +180,7 @@ async def download_file(data=Depends(SignedPayload.unwrap(DownloadFileRequest)))
 @router.post("/files/share_file")
 async def share_file(data=Depends(SignedPayload.unwrap(ShareFileRequest))):
     logger.debug(
-        f"Sharing file from {data.sharer_username} to {data.recipient_username}"
+        "Sharing file from %s to %s", data.sharer_username, data.recipient_username
     )
     with Session(engine) as session:
         # Verify sharer exists
@@ -189,7 +189,7 @@ async def share_file(data=Depends(SignedPayload.unwrap(ShareFileRequest))):
         ).first()
         if not sharer:
             raise HTTPException(
-                status_code=404, detail=f"Sharer {data.sharer_username} not found"
+                status_code=404, detail=f"Sharer {data.sharer_username} not found" 
             )
 
         # Verify recipient exists
@@ -215,7 +215,7 @@ async def share_file(data=Depends(SignedPayload.unwrap(ShareFileRequest))):
             )
 
         logger.info(
-            f"File verification passed: {file.file_name} owned by {data.sharer_username}"
+            "File verification passed: %s owned by %s", file.file_name, data.sharer_username
         )
 
         # Check if file is already shared with this recipient
@@ -232,11 +232,11 @@ async def share_file(data=Depends(SignedPayload.unwrap(ShareFileRequest))):
                 existing_share.revoked = False
                 session.add(existing_share)
                 logger.info(
-                    f"Re-enabled access for {data.recipient_username} to file {data.file_uuid}"
+                    "Re-enabled access for %s to file %s", data.recipient_username, data.file_uuid
                 )
             else:
                 logger.info(
-                    f"File {data.file_uuid} already shared with {data.recipient_username}"
+                    "File %s already shared with %s", data.file_uuid, data.recipient_username
                 )
         else:
             # Create new file share record
@@ -246,7 +246,7 @@ async def share_file(data=Depends(SignedPayload.unwrap(ShareFileRequest))):
                 recipient_username=data.recipient_username,
             )
             session.add(new_file_share)
-            logger.info(f"Created new file share record for {data.recipient_username}")
+            logger.info("Created new file share record for %s", data.recipient_username)
 
         # Store the initial message for the recipient
         new_message = MessageStore(
@@ -259,7 +259,7 @@ async def share_file(data=Depends(SignedPayload.unwrap(ShareFileRequest))):
         session.add(new_message)
         session.commit()
         logger.info(
-            f"Initial message stored for {data.recipient_username} from {data.sharer_username}"
+            "Initial message stored for %s from %s", data.recipient_username, data.sharer_username
         )
 
     return JSONResponse(content={"message": "File shared successfully"})

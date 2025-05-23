@@ -76,7 +76,7 @@ async def otp_prekey_push(data=Depends(SignedPayload.unwrap(OtpPrekeyPush))):
 
 @router.post("/x3dh/prekey_bundle", response_model=PrekeyBundleResponse)
 async def get_prekey_bundle(data=Depends(SignedPayload.unwrap(GetPrekeyBundleRequest))):
-    logger.debug(f"Fetching prekey bundle for user: {data.target_username}")
+    logger.debug("Fetching prekey bundle for user: %s", data.target_username)
     with Session(engine) as session:
         user = session.exec(
             select(User).where(User.username == data.target_username)
@@ -107,16 +107,16 @@ async def get_prekey_bundle(data=Depends(SignedPayload.unwrap(GetPrekeyBundleReq
             session.commit()
             session.refresh(otp_record)
             logger.info(
-                f"OTP {otp_record.id} for user {data.target_username} marked as used."
+                "OTP %s for user %s marked as used.", otp_record.id, data.target_username
             )
         else:
             # OTP is mandatory, raise an error if not found
             logger.error(
-                f"Mandatory OTP not available for user: {data.target_username}"
+                "Mandatory OTP not available for user: %s", data.target_username
             )
             raise HTTPException(
                 status_code=404,
-                detail=f"Mandatory OTP not available for user: {data.target_username}",
+                detail="Mandatory OTP not available for user: %s" % data.target_username,
             )
 
         return PrekeyBundleResponse(
@@ -133,7 +133,7 @@ async def get_prekey_bundle(data=Depends(SignedPayload.unwrap(GetPrekeyBundleReq
 async def grab_initial_messages(
     data=Depends(SignedPayload.unwrap(GrabInitialMessagesRequest)),
 ):
-    logger.debug(f"Grabbing initial messages for user: {data.username}")
+    logger.debug("Grabbing initial messages for user: %s", data.username)
     with Session(engine) as session:
         # Verify user exists
         user = session.exec(select(User).where(User.username == data.username)).first()
@@ -148,7 +148,7 @@ async def grab_initial_messages(
         ).all()
 
         if not message_records:
-            logger.info(f"No initial messages found for user: {data.username}")
+            logger.info("No initial messages found for user: %s", data.username)
             return GrabInitialMessagesResponse(messages=[])
 
         initial_messages = []
@@ -166,7 +166,7 @@ async def grab_initial_messages(
 
         session.commit()
         logger.info(
-            f"Retrieved and deleted {len(initial_messages)} initial messages for user: {data.username}"
+            "Retrieved and deleted %s initial messages for user: %s", len(initial_messages), data.username
         )
 
         return GrabInitialMessagesResponse(messages=initial_messages)
