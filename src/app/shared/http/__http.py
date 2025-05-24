@@ -1,3 +1,4 @@
+# type: ignore
 import logging
 from contextlib import contextmanager
 
