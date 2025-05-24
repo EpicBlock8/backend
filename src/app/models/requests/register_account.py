@@ -1,6 +1,5 @@
-from pydantic import BaseModel
+from .base import BaseRequest
 
-
-class RegisterAccount(BaseModel):
+class RegisterAccount(BaseRequest):
     username: str
     public_key: str

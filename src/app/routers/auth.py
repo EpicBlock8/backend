@@ -17,8 +17,8 @@ router = APIRouter()
 config = load_config()
 endpoint = config.endpoint
 
-@router.get("/auth/register")
-async def register(data=Depends(SignedPayload.unwrap(RegisterAccount))):
+@router.post("/auth/register")
+async def register(data: RegisterAccount = Depends(SignedPayload.unwrap(RegisterAccount))):
     """
     input: master password
     derive: master chief using argon2id
