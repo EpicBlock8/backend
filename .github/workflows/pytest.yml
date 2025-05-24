@@ -20,5 +20,9 @@ jobs:
         run: |
           uv sync --frozen        # ignore stale lock file and just use it
 
+      - name: Run pyright
+        run: uv run pyright
+
       - name: Run tests
         run: uv run pytest
+
