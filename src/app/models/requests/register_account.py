@@ -1,5 +1,5 @@
-from .base import BaseRequest
+from .serde_base import SerdeBase
 
-class RegisterAccount(BaseRequest):
+class RegisterAccount(SerdeBase):
     username: str
     public_key: str
