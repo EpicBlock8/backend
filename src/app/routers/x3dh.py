@@ -97,7 +97,7 @@ async def get_prekey_bundle(data: GetPrekeyBundleRequest = Depends(SignedPayload
         # Fetch an unused OTP with row-level locking to prevent race conditions
         otp_record = session.exec(
             select(Otp)
-            .where(Otp.f_username == data.target_username, Otp.used is False)
+            .where(Otp.f_username == data.target_username, Otp.used == False)
             .with_for_update()
         ).first()
 
