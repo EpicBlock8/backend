@@ -79,6 +79,7 @@ pythonpath = ["src"]
 [dependency-groups]
 dev = [
     "httpx>=0.28.1",
+    "pyright>=1.1.401",
     "pytest>=8.3.5",
 ]
 
