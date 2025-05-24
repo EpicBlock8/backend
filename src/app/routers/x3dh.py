@@ -1,3 +1,5 @@
+from base64 import b64decode, b64encode
+
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from sqlmodel import Session, select
@@ -27,7 +29,7 @@ endpoint = config.endpoint
 
 
 @router.post("/x3dh/signed_prekey_push")
-async def signed_prekey_push(data=Depends(SignedPayload.unwrap(SignedPrekeyPush))):
+async def signed_prekey_push(data: SignedPrekeyPush = Depends(SignedPayload.unwrap(SignedPrekeyPush))):
     logger.debug(data)
     with Session(engine) as session:
         user = session.exec(select(User).where(User.username == data.username)).first()
@@ -39,14 +41,14 @@ async def signed_prekey_push(data=Depends(SignedPayload.unwrap(SignedPrekeyPush)
         ).first()
         if prekey_bundle:
             # Update existing prekey bundle
-            prekey_bundle.prekey = data.signed_prekey_public
-            prekey_bundle.sig_prekey = data.signed_prekey_signature
+            prekey_bundle.prekey = b64decode(data.signed_prekey_public)
+            prekey_bundle.sig_prekey = b64decode(data.signed_prekey_signature)
         else:
             # Create new prekey bundle
             prekey_bundle = PrekeyBundle(
                 f_username=data.username,
-                prekey=data.signed_prekey_public,
-                sig_prekey=data.signed_prekey_signature,
+                prekey=b64decode(data.signed_prekey_public),
+                sig_prekey=b64decode(data.signed_prekey_signature),
             )
         session.add(prekey_bundle)
         session.commit()
@@ -56,7 +58,7 @@ async def signed_prekey_push(data=Depends(SignedPayload.unwrap(SignedPrekeyPush)
 
 
 @router.post("/x3dh/otp_prekey_push")
-async def otp_prekey_push(data=Depends(SignedPayload.unwrap(OtpPrekeyPush))):
+async def otp_prekey_push(data: OtpPrekeyPush = Depends(SignedPayload.unwrap(OtpPrekeyPush))):
     logger.debug(data)
     with Session(engine) as session:
         user = session.exec(select(User).where(User.username == data.username)).first()
@@ -66,7 +68,7 @@ async def otp_prekey_push(data=Depends(SignedPayload.unwrap(OtpPrekeyPush))):
             )  # double checking in case -
 
         for otp_key in data.pub_otps:
-            new_otp = Otp(f_username=data.username, otp_val=otp_key)
+            new_otp = Otp(f_username=data.username, otp_val=b64decode(otp_key))
             session.add(new_otp)
 
         session.commit()
@@ -75,7 +77,7 @@ async def otp_prekey_push(data=Depends(SignedPayload.unwrap(OtpPrekeyPush))):
 
 
 @router.post("/x3dh/prekey_bundle", response_model=PrekeyBundleResponse)
-async def get_prekey_bundle(data=Depends(SignedPayload.unwrap(GetPrekeyBundleRequest))):
+async def get_prekey_bundle(data: GetPrekeyBundleRequest = Depends(SignedPayload.unwrap(GetPrekeyBundleRequest))):
     logger.debug("Fetching prekey bundle for user: %s", data.target_username)
     with Session(engine) as session:
         user = session.exec(
@@ -120,10 +122,10 @@ async def get_prekey_bundle(data=Depends(SignedPayload.unwrap(GetPrekeyBundleReq
             )
 
         return PrekeyBundleResponse(
-            identity_key=user.public_key,
-            signed_prekey=prekey_bundle_db.prekey,
-            signed_prekey_signature=prekey_bundle_db.sig_prekey,
-            one_time_prekey=one_time_prekey_val,
+            identity_key=b64encode(user.public_key).decode("utf8"),
+            signed_prekey=b64encode(prekey_bundle_db.prekey).decode("utf8"),
+            signed_prekey_signature=b64encode(prekey_bundle_db.sig_prekey).decode("utf8"),
+            one_time_prekey=b64encode(one_time_prekey_val).decode("utf8"),
         )
 
 
@@ -131,7 +133,7 @@ async def get_prekey_bundle(data=Depends(SignedPayload.unwrap(GetPrekeyBundleReq
     "/x3dh/grab_return_messages", response_model=GrabReturnMessages
 ) 
 async def grab_return_messages(
-    data=Depends(SignedPayload.unwrap(GrabReturnMessagesRequest)),
+    data: GrabReturnMessagesRequest = Depends(SignedPayload.unwrap(GrabReturnMessagesRequest)),
 ):
     logger.debug("Grabbing initial messages for user: %s", data.username)
     with Session(engine) as session:
@@ -155,10 +157,10 @@ async def grab_return_messages(
         for record in message_records:
             return_messages.append(
                 ReturnMessage(
-                    sharer_identity_key_public=record.sharer_identity_key_public,
-                    sharer_ephemeral_key_public=record.eph_key,
-                    otp_hash=record.otp_hash,  # sha-256 hash of the otp
-                    encrypted_dek=record.e_dek,
+                    sharer_identity_key_public=b64encode(record.sharer_identity_key_public).decode("utf8"),
+                    sharer_ephemeral_key_public=b64encode(record.eph_key).decode("utf8"),
+                    otp_hash=b64encode(record.otp_hash).decode("utf8"),  # sha-256 hash of the otp
+                    encrypted_dek=b64encode(record.e_dek).decode("utf8"),
                 )
             )
             # Delete the message from the server after fetching

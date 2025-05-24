@@ -12,7 +12,7 @@ from app.models.requests import (
     UploadFileRequest,
     UploadFileResponse,
 )
-from app.models.requests.files import ShareFileRequest
+from app.models.requests.files import DeleteFileRequest, ShareFileRequest
 from app.models.schema import File, FileShare, MessageStore, User
 from app.shared import Logger, load_config
 from app.shared.db import engine
@@ -180,7 +180,7 @@ async def download_file(
 
 
 @router.post("/files/share_file")
-async def share_file(data=Depends(SignedPayload.unwrap(ShareFileRequest))):
+async def share_file(data: ShareFileRequest = Depends(SignedPayload.unwrap(ShareFileRequest))):
     logger.debug(
         "Sharing file from %s to %s", data.sharer_username, data.recipient_username
     )
@@ -253,10 +253,10 @@ async def share_file(data=Depends(SignedPayload.unwrap(ShareFileRequest))):
         # Store the initial message for the recipient
         new_message = MessageStore(
             f_username=data.recipient_username,
-            sharer_identity_key_public=data.sharer_identity_key_public,
-            eph_key=data.sharer_ephemeral_key_public,
-            otp_hash=data.otp_hash,
-            e_dek=data.encrypted_dek,
+            sharer_identity_key_public=base64.b64decode(data.sharer_identity_key_public),
+            eph_key=base64.b64decode(data.sharer_ephemeral_key_public),
+            otp_hash=base64.b64decode(data.otp_hash),
+            e_dek=base64.b64decode(data.encrypted_dek),
         )
         session.add(new_message)
         session.commit()
@@ -265,3 +265,65 @@ async def share_file(data=Depends(SignedPayload.unwrap(ShareFileRequest))):
         )
 
     return JSONResponse(content={"message": "File shared successfully"})
+
+
+@router.post("/files/delete")
+async def delete_file(
+    data: DeleteFileRequest = Depends(SignedPayload.unwrap(DeleteFileRequest)),  # noqa: B008
+):
+    """
+    send: file UUID signed
+    ======================
+    Delete file blob
+    Delete every record we have of it being shared
+    ======================
+    receive: confirmation
+    """
+    logger.debug("Delete request for UUID: %s by user: %s", data.uuid, data.username)
+
+    with Session(engine) as session:
+        # Verify user exists
+        user = session.exec(select(User).where(User.username == data.username)).first()
+        if not user:
+            raise HTTPException(
+                status_code=404, detail=f"User {data.username} not found"
+            )
+
+        # Verify file exists
+        file = session.exec(select(File).where(File.uuid == data.uuid)).first()
+        if not file:
+            raise HTTPException(
+                status_code=404, detail=f"File with UUID {data.uuid} not found"
+            )
+
+        # Check access permissions
+        has_access = False
+
+        # Check if user is the owner
+        if file.owner_username == data.username:
+            has_access = True
+            logger.info("Access granted: %s is owner of file %s", data.username, data.uuid)
+
+        if not has_access:
+            logger.warning(
+                "Access denied: %s cannot delete file %s", data.username, data.uuid
+            )
+            raise HTTPException(
+                status_code=403,
+                detail=f"User {data.username} does not have access to delete file {data.uuid}",
+            )
+
+        # Check if file exists on disk
+        file_path = uploads_dir / f"{data.uuid}"
+        if not file_path.exists():
+            logger.error("File not found on disk: %s", file_path)
+            raise HTTPException(status_code=404, detail="File not found on disk")
+
+        try:
+            file_path.unlink()
+        except Exception as e:
+            logger.error("Failed to delete file: %s", e)
+            raise HTTPException(status_code=500, detail="Failed to delete file") from e
+        
+        # Return file as download
+        return JSONResponse({ "message": "File deleted successfully" })

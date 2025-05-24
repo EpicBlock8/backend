@@ -1,6 +1,5 @@
-from pydantic import BaseModel
+from .serde_base import SerdeBase
 
-
-class RegisterAccount(BaseModel):
+class RegisterAccount(SerdeBase):
     username: str
     public_key: str
