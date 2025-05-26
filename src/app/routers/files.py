@@ -252,7 +252,7 @@ async def share_file(data: ShareFileRequest = Depends(SignedPayload.unwrap(Share
 
         # Store the initial message for the recipient
         new_message = MessageStore(
-            f_username=data.recipient_username,
+            recipient_username=data.recipient_username,
             sharer_identity_key_public=base64.b64decode(data.sharer_identity_key_public),
             eph_key=base64.b64decode(data.sharer_ephemeral_key_public),
             sharer_username=data.sharer_username,

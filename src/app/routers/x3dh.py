@@ -146,7 +146,7 @@ async def grab_return_messages(
 
         # Fetch all messages for the user
         message_records = session.exec(
-            select(MessageStore).where(MessageStore.f_username == data.username)
+            select(MessageStore).where(MessageStore.recipient_username == data.username)
         ).all()
 
         if not message_records:
