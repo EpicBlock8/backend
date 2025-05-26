@@ -15,7 +15,6 @@ class User(SQLModel, table=True):
     # Relationships
     prekey_bundles: list["PrekeyBundle"] = Relationship(back_populates="user")
     otps: list["Otp"] = Relationship(back_populates="user")
-    message_stores: list["MessageStore"] = Relationship(back_populates="user")
     owned_files: list["File"] = Relationship(back_populates="owner")
     shared_files: list["FileShare"] = Relationship(
         back_populates="owner",
@@ -24,6 +23,14 @@ class User(SQLModel, table=True):
     received_files: list["FileShare"] = Relationship(
         back_populates="recipient",
         sa_relationship_kwargs={"foreign_keys": "FileShare.recipient_username"},
+    )
+    received_messages: list["MessageStore"] = Relationship(
+        back_populates="recipient",
+        sa_relationship_kwargs={"foreign_keys": "MessageStore.recipient_username"},
+    )
+    sent_messages: list["MessageStore"] = Relationship(
+        back_populates="sharer",
+        sa_relationship_kwargs={"foreign_keys": "MessageStore.sharer_username"},
     )
 
 
@@ -100,11 +107,8 @@ class Otp(SQLModel, table=True):
 
 class MessageStore(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
-    f_username: str = Field(
-        ...,
-        foreign_key="user.username",
-        description="Foreign key to User.username (recipient)",
-    )
+    recipient_username: str = Field(..., foreign_key="user.username")
+    sharer_username:    str = Field(..., foreign_key="user.username")
     sharer_identity_key_public: bytes = Field(
         ..., description="Sharer's public identity key"
     )
@@ -113,10 +117,13 @@ class MessageStore(SQLModel, table=True):
     otp_hash: bytes = Field(
         ..., description="Hash of the recipient's OTP used for this message"
     )
-    sharer_username: str = Field(
-        ...,
-        foreign_key="user.username",
-        description="Foreign key to User.username (sharer)",
-    )
 
-    user: User | None = Relationship(back_populates="message_stores")
+    # disambiguated relationships:
+    recipient: User | None = Relationship(
+        back_populates="received_messages",
+        sa_relationship_kwargs={"foreign_keys": "MessageStore.recipient_username"},
+    )
+    sharer: User | None = Relationship(
+        back_populates="sent_messages",
+        sa_relationship_kwargs={"foreign_keys": "MessageStore.sharer_username"},
+    )
