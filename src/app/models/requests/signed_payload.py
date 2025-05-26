@@ -2,24 +2,19 @@ import json
 from collections.abc import Awaitable, Callable
 from typing import TypeVar
 
-from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 from fastapi import HTTPException, Request
 from pydantic import BaseModel
+from sqlmodel import Session, select
 
 from app.core.verify import verify
+from app.models.schema import User
 from app.shared import Logger
+from app.shared.db import engine
 
 logger = Logger(__name__).get_logger()
 
 T = TypeVar("T")
-
-
-def db_get_public_key(username: str):
-    # TODO: Replace with real public key retrieval logic
-    private_bytes = (b"hello world" * 3)[:32]
-    private_key = Ed25519PrivateKey.from_private_bytes(private_bytes)
-    public_key = private_key.public_key()
-    return public_key
 
 
 class SignedPayload(BaseModel):
@@ -46,20 +41,24 @@ class SignedPayload(BaseModel):
                 logger.debug("Request JSON body parsed successfully.")
 
                 signed = cls(**body)
-                public_key = db_get_public_key(signed.username)
-                try:
-                    verify(
-                        public_key=public_key,
-                        signature=signed.signature,
-                        data=signed.payload,
-                    )
-                except HTTPException as e:
-                    # TODO: DO NOT PUSH TO PROD OR I WILL KILL SOMEONE
-                    logger.warning(
-                        "Signature verification failed (IGNORING DEBUG!! DO NOT USE IN PROD): %s",
-                        e,
-                    )
-                    # raise HTTPException(status_code=400, detail="Invalid signature") from e
+
+                with Session(engine) as session:
+                    # Get user and ensure it exists
+                    user = session.exec(
+                        select(User).where(User.username == signed.username)
+                    ).first()
+                    if user is None:
+                        raise HTTPException(
+                            status_code=404,
+                            detail="User does not exists",
+                        )
+                    public_key = Ed25519PublicKey.from_public_bytes(user.public_key)
+
+                verify(
+                    public_key=public_key,
+                    signature=signed.signature,
+                    data=signed.payload,
+                )
 
                 payload_data = json.loads(signed.payload)
                 logger.debug("Payload successfully decoded: %s", payload_data)
