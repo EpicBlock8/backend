@@ -159,6 +159,7 @@ async def grab_return_messages(
                 ReturnMessage(
                     sharer_identity_key_public=b64encode(record.sharer_identity_key_public).decode("utf8"),
                     sharer_ephemeral_key_public=b64encode(record.eph_key).decode("utf8"),
+                    sharer_username=record.sharer_username,
                     otp_hash=b64encode(record.otp_hash).decode("utf8"),  # sha-256 hash of the otp
                     encrypted_dek=b64encode(record.e_dek).decode("utf8"),
                 )

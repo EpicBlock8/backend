@@ -113,5 +113,10 @@ class MessageStore(SQLModel, table=True):
     otp_hash: bytes = Field(
         ..., description="Hash of the recipient's OTP used for this message"
     )
+    sharer_username: str = Field(
+        ...,
+        foreign_key="user.username",
+        description="Foreign key to User.username (sharer)",
+    )
 
     user: User | None = Relationship(back_populates="message_stores")
