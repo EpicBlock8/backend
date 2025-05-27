@@ -257,7 +257,7 @@ async def share_file(data: ShareFileRequest = Depends(SignedPayload.unwrap(Share
             eph_key=base64.b64decode(data.sharer_ephemeral_key_public),
             sharer_username=data.sharer_username,
             otp_hash=base64.b64decode(data.otp_hash),
-            e_dek=base64.b64decode(data.encrypted_dek),
+            e_message=base64.b64decode(data.encrypted_message),
         )
         session.add(new_message)
         session.commit()

@@ -113,7 +113,7 @@ class MessageStore(SQLModel, table=True):
         ..., description="Sharer's public identity key"
     )
     eph_key: bytes = Field(..., description="Sharer's public ephemeral key")
-    e_dek: bytes = Field(..., description="Encrypted data encryption key")
+    e_message: bytes = Field(..., description="Encrypted message")
     otp_hash: bytes = Field(
         ..., description="Hash of the recipient's OTP used for this message"
     )

@@ -161,7 +161,7 @@ async def grab_return_messages(
                     sharer_ephemeral_key_public=b64encode(record.eph_key).decode("utf8"),
                     sharer_username=record.sharer_username,
                     otp_hash=b64encode(record.otp_hash).decode("utf8"),  # sha-256 hash of the otp
-                    encrypted_dek=b64encode(record.e_dek).decode("utf8"),
+                    encrypted_message=b64encode(record.e_message).decode("utf8"),
                 )
             )
             # Delete the message from the server after fetching
