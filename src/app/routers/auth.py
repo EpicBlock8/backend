@@ -18,7 +18,7 @@ config = load_config()
 endpoint = config.endpoint
 
 @router.post("/auth/register")
-async def register(data: RegisterAccount = Depends(SignedPayload.unwrap(RegisterAccount))):
+async def register(data: RegisterAccount = Depends(SignedPayload.unwrap_no_checks(RegisterAccount))):
     """
     input: master password
     derive: master chief using argon2id
