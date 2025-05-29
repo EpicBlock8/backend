@@ -11,7 +11,7 @@ from app.shared.logger import Logger
 logger = Logger(__name__).get_logger()
 
 
-def verify(public_key: Ed25519PublicKey, signature: str, data: str):
+def signature_verify(public_key: Ed25519PublicKey, signature: str, data: str):
     # def verify_signature(self) -> None:
     """
     Verifies the Ed25519 signature of the payload.
