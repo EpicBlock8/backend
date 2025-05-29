@@ -1,4 +1,6 @@
 # type: ignore
+from typing import Annotated
+
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
@@ -16,7 +18,16 @@ endpoint = config.endpoint
 class MyEndpointRequest(BaseModel): ...
 
 
-@router.post(endpoint.my_endpoint)
+@router.post("/")
 async def my_endpoint(
-    data: MyEndpointRequest = Depends(SignedPayload.unwrap(MyEndpointRequest)),  # noqa: B008
+    data: Annotated[
+        MyEndpointRequest, Depends(SignedPayload.unwrap(MyEndpointRequest))
+    ],
 ): ...
+
+
+raise ImportError(
+    "\nThis module should never be imported directly."
+    "\nInstead, copy this file and use it as a template."
+    "\nRemove this line afterwards."
+)
