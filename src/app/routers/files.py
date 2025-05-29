@@ -149,7 +149,7 @@ async def download_file(
                 select(FileShare).where(
                     FileShare.file_uuid == data.uuid,
                     FileShare.recipient_username == data.username,
-                    FileShare.revoked == False,
+                    not FileShare.revoked,
                 )
             ).first()
 
