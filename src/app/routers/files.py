@@ -250,21 +250,6 @@ async def share_file(data: ShareFileRequest = Depends(SignedPayload.unwrap(Share
             session.add(new_file_share)
             logger.info("Created new file share record for %s", data.recipient_username)
 
-        # Store the initial message for the recipient
-        new_message = MessageStore(
-            recipient_username=data.recipient_username,
-            sharer_identity_key_public=base64.b64decode(data.sharer_identity_key_public),
-            eph_key=base64.b64decode(data.sharer_ephemeral_key_public),
-            sharer_username=data.sharer_username,
-            otp_hash=base64.b64decode(data.otp_hash),
-            e_message=base64.b64decode(data.encrypted_message),
-        )
-        session.add(new_message)
-        session.commit()
-        logger.info(
-            "Initial message stored for %s from %s", data.recipient_username, data.sharer_username
-        )
-
     return JSONResponse(content={"message": "File shared successfully"})
 
 

@@ -8,6 +8,8 @@ from app.models.requests import SignedPayload
 from app.models.requests.x3dh import (
     GetPrekeyBundleRequest,
     GrabReturnMessages,
+    PostReturnMessage,
+    PostReturnMessageResponse,
     ReturnMessage,
     OtpPrekeyPush,
     PrekeyBundleResponse,
@@ -127,6 +129,51 @@ async def get_prekey_bundle(data: GetPrekeyBundleRequest = Depends(SignedPayload
             signed_prekey_signature=b64encode(prekey_bundle_db.sig_prekey).decode("utf8"),
             one_time_prekey=b64encode(one_time_prekey_val).decode("utf8"),
         )
+
+@router.post("/x3dh/post_return_message", response_model=PostReturnMessageResponse)
+async def post_return_messages(
+    data: PostReturnMessage = Depends(SignedPayload.unwrap(PostReturnMessage)),
+):
+    with Session(engine) as session:
+        # Verify user exists
+        sharer = session.exec(
+            select(User).where(User.username == data.sharer_username)
+        ).first()
+        
+        if not sharer:
+            raise HTTPException(
+                status_code=404, detail=f"Sharer {data.sharer_username} not found" 
+            )
+
+        # Verify recipient exists
+        recipient = session.exec(
+            select(User).where(User.username == data.recipient_username)
+        ).first()
+        
+        if not recipient:
+            raise HTTPException(
+                status_code=404, detail=f"Recipient {data.recipient_username} not found"
+            )
+        
+        # Store the initial message for the recipient        
+        new_message = MessageStore(
+            recipient_username=data.recipient_username,
+            sharer_identity_key_public=b64decode(data.sharer_identity_key_public),
+            eph_key=b64decode(data.sharer_ephemeral_key_public),
+            sharer_username=data.sharer_username,
+            otp_hash=b64decode(data.otp_hash),
+            e_message=b64decode(data.encrypted_message),
+        )
+
+        session.add(new_message)
+        session.commit()
+
+        logger.info(
+            "Initial message stored for %s from %s", data.recipient_username, data.sharer_username
+        )
+        
+        return PostReturnMessageResponse(message="Message posted successfully")
+
 
 
 @router.post(
