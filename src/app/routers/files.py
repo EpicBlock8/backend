@@ -47,7 +47,10 @@ async def upload_file(
     - file_content_b64: Base64 encoded file content
     """
     logger.debug(
-        "Uploading file: %s for user: %s, UUID: %s", data.file_name, data.username, data.uuid
+        "Uploading file: %s for user: %s, UUID: %s",
+        data.file_name,
+        data.username,
+        data.uuid,
     )
 
     with Session(engine) as session:
@@ -70,7 +73,9 @@ async def upload_file(
             file_content = base64.b64decode(data.file_content_b64)
             file_size = len(file_content)
             logger.info(
-                "Decoded %s bytes from Base64 input for file: %s", file_size, data.file_name
+                "Decoded %s bytes from Base64 input for file: %s",
+                file_size,
+                data.file_name,
             )
         except Exception as e:
             logger.error("Failed to decode Base64 content: %s", e)
@@ -102,7 +107,10 @@ async def upload_file(
         session.refresh(new_file)
 
         logger.info(
-            "File upload completed: %s (%s bytes) for user %s", data.file_name, file_size, data.username
+            "File upload completed: %s (%s bytes) for user %s",
+            data.file_name,
+            file_size,
+            data.username,
         )
 
     return JSONResponse(content={"message": "File uploaded successfully"})
@@ -142,7 +150,9 @@ async def download_file(
         # Check if user is the owner
         if file.owner_username == data.username:
             has_access = True
-            logger.info("Access granted: %s is owner of file %s", data.username, data.uuid)
+            logger.info(
+                "Access granted: %s is owner of file %s", data.username, data.uuid
+            )
         else:
             # Check if file has been shared with this user
             file_share = session.exec(
@@ -220,11 +230,15 @@ async def share_file(
         if file.owner_username != data.sharer_username:
             raise HTTPException(
                 status_code=403,
-                detail=f"User {data.sharer_username} does not own file {data.file_uuid}",
+                detail=(
+                    f"User {data.sharer_username} does not own file {data.file_uuid}"
+                ),
             )
 
         logger.info(
-            "File verification passed: %s owned by %s", file.file_name, data.sharer_username
+            "File verification passed: %s owned by %s",
+            file.file_name,
+            data.sharer_username,
         )
 
         # Check if file is already shared with this recipient
@@ -241,11 +255,15 @@ async def share_file(
                 existing_share.revoked = False
                 session.add(existing_share)
                 logger.info(
-                    "Re-enabled access for %s to file %s", data.recipient_username, data.file_uuid
+                    "Re-enabled access for %s to file %s",
+                    data.recipient_username,
+                    data.file_uuid,
                 )
             else:
                 logger.info(
-                    "File %s already shared with %s", data.file_uuid, data.recipient_username
+                    "File %s already shared with %s",
+                    data.file_uuid,
+                    data.recipient_username,
                 )
         else:
             # Create new file share record
@@ -260,7 +278,9 @@ async def share_file(
         # Store the initial message for the recipient
         new_message = MessageStore(
             f_username=data.recipient_username,
-            sharer_identity_key_public=base64.b64decode(data.sharer_identity_key_public),
+            sharer_identity_key_public=base64.b64decode(
+                data.sharer_identity_key_public
+            ),
             eph_key=base64.b64decode(data.sharer_ephemeral_key_public),
             otp_hash=base64.b64decode(data.otp_hash),
             e_dek=base64.b64decode(data.encrypted_dek),
@@ -268,7 +288,9 @@ async def share_file(
         session.add(new_message)
         session.commit()
         logger.info(
-            "Initial message stored for %s from %s", data.recipient_username, data.sharer_username
+            "Initial message stored for %s from %s",
+            data.recipient_username,
+            data.sharer_username,
         )
 
     return JSONResponse(content={"message": "File shared successfully"})
@@ -311,7 +333,9 @@ async def delete_file(
         # Check if user is the owner
         if file.owner_username == data.username:
             has_access = True
-            logger.info("Access granted: %s is owner of file %s", data.username, data.uuid)
+            logger.info(
+                "Access granted: %s is owner of file %s", data.username, data.uuid
+            )
 
         if not has_access:
             logger.warning(
@@ -319,7 +343,10 @@ async def delete_file(
             )
             raise HTTPException(
                 status_code=403,
-                detail=f"User {data.username} does not have access to delete file {data.uuid}",
+                detail=(
+                    f"User {data.username} does not have "
+                    f"access to delete file {data.uuid}"
+                ),
             )
 
         # Check if file exists on disk

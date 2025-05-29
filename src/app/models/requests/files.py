@@ -18,7 +18,9 @@ class ShareFileRequest(SerdeBase):
     recipient_username: str
     file_uuid: str
     sharer_identity_key_public: str  # Alice's public iKEK
-    sharer_ephemeral_key_public: str  # Ephemeral key (random key that Alice generated during the secret derivation step)
+    sharer_ephemeral_key_public: str
+    # ^- Ephemeral key (random key that Alice generated
+    #    during the secret derivation step).
     otp_hash: str  # Hash of the Bob's OT PreKey
     encrypted_dek: str  # eDEK (encrypted DEK)
 

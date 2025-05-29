@@ -118,7 +118,9 @@ async def get_prekey_bundle(
             session.commit()
             session.refresh(otp_record)
             logger.info(
-                "OTP %s for user %s marked as used.", otp_record.id, data.target_username
+                "OTP %s for user %s marked as used.",
+                otp_record.id,
+                data.target_username,
             )
         else:
             # OTP is mandatory, raise an error if not found
@@ -127,20 +129,20 @@ async def get_prekey_bundle(
             )
             raise HTTPException(
                 status_code=404,
-                detail="Mandatory OTP not available for user: %s" % data.target_username,
+                detail=f"Mandatory OTP not available for user: {data.target_username}",
             )
 
         return PrekeyBundleResponse(
             identity_key=b64encode(user.public_key).decode("utf8"),
             signed_prekey=b64encode(prekey_bundle_db.prekey).decode("utf8"),
-            signed_prekey_signature=b64encode(prekey_bundle_db.sig_prekey).decode("utf8"),
+            signed_prekey_signature=b64encode(prekey_bundle_db.sig_prekey).decode(
+                "utf8"
+            ),
             one_time_prekey=b64encode(one_time_prekey_val).decode("utf8"),
         )
 
 
-@router.post(
-    "/x3dh/grab_return_messages", response_model=GrabReturnMessages
-)
+@router.post("/x3dh/grab_return_messages", response_model=GrabReturnMessages)
 async def grab_return_messages(
     data: Annotated[
         GrabReturnMessagesRequest,
@@ -169,9 +171,15 @@ async def grab_return_messages(
         for record in message_records:
             return_messages.append(
                 ReturnMessage(
-                    sharer_identity_key_public=b64encode(record.sharer_identity_key_public).decode("utf8"),
-                    sharer_ephemeral_key_public=b64encode(record.eph_key).decode("utf8"),
-                    otp_hash=b64encode(record.otp_hash).decode("utf8"),  # sha-256 hash of the otp
+                    sharer_identity_key_public=b64encode(
+                        record.sharer_identity_key_public
+                    ).decode("utf8"),
+                    sharer_ephemeral_key_public=b64encode(record.eph_key).decode(
+                        "utf8"
+                    ),
+                    otp_hash=b64encode(record.otp_hash).decode(
+                        "utf8"
+                    ),  # sha-256 hash of the otp
                     encrypted_dek=b64encode(record.e_dek).decode("utf8"),
                 )
             )
@@ -180,7 +188,9 @@ async def grab_return_messages(
 
         session.commit()
         logger.info(
-            "Retrieved and deleted %s initial messages for user: %s", len(return_messages), data.username
+            "Retrieved and deleted %s initial messages for user: %s",
+            len(return_messages),
+            data.username,
         )
 
         return GrabReturnMessages(messages=return_messages)
