@@ -18,6 +18,7 @@ router = APIRouter()
 config = load_config()
 endpoint = config.endpoint
 
+
 @router.post("/auth/register")
 async def register(
     data: Annotated[

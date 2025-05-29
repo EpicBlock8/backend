@@ -198,7 +198,7 @@ async def share_file(
         ).first()
         if not sharer:
             raise HTTPException(
-                status_code=404, detail=f"Sharer {data.sharer_username} not found" 
+                status_code=404, detail=f"Sharer {data.sharer_username} not found"
             )
 
         # Verify recipient exists
@@ -333,6 +333,6 @@ async def delete_file(
         except Exception as e:
             logger.error("Failed to delete file: %s", e)
             raise HTTPException(status_code=500, detail="Failed to delete file") from e
-        
+
         # Return file as download
-        return JSONResponse({ "message": "File deleted successfully" })
+        return JSONResponse({"message": "File deleted successfully"})
