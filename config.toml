@@ -28,3 +28,7 @@ host = "127.0.0.1"
 port = 8000
 
 reload = true
+
+[network.rate_limit]
+requests_per_second = 15
+timeout_period = 60
