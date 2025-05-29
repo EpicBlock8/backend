@@ -1,6 +1,7 @@
 import base64
 from datetime import datetime
 from pathlib import Path
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse, JSONResponse
@@ -32,7 +33,9 @@ logger.info("Files will be stored in: %s", uploads_dir.absolute())
 
 @router.post("/files/upload", response_model=UploadFileResponse)
 async def upload_file(
-    data: UploadFileRequest = Depends(SignedPayload.unwrap(UploadFileRequest)),
+    data: Annotated[
+        UploadFileRequest, Depends(SignedPayload.unwrap(UploadFileRequest))
+    ],
 ):
     """
     Upload a file via JSON payload. The file content is Base64 encoded.
@@ -107,7 +110,9 @@ async def upload_file(
 
 @router.post("/files/download")
 async def download_file(
-    data: DownloadFileRequest = Depends(SignedPayload.unwrap(DownloadFileRequest)),  # noqa: B008
+    data: Annotated[
+        DownloadFileRequest, Depends(SignedPayload.unwrap(DownloadFileRequest))
+    ],
 ):
     """
     Download a file by UUID.
@@ -180,7 +185,9 @@ async def download_file(
 
 
 @router.post("/files/share_file")
-async def share_file(data: ShareFileRequest = Depends(SignedPayload.unwrap(ShareFileRequest))):
+async def share_file(
+    data: Annotated[ShareFileRequest, Depends(SignedPayload.unwrap(ShareFileRequest))],
+):
     logger.debug(
         "Sharing file from %s to %s", data.sharer_username, data.recipient_username
     )
@@ -269,7 +276,9 @@ async def share_file(data: ShareFileRequest = Depends(SignedPayload.unwrap(Share
 
 @router.post("/files/delete")
 async def delete_file(
-    data: DeleteFileRequest = Depends(SignedPayload.unwrap(DeleteFileRequest)),  # noqa: B008
+    data: Annotated[
+        DeleteFileRequest, Depends(SignedPayload.unwrap(DeleteFileRequest))
+    ],
 ):
     """
     send: file UUID signed

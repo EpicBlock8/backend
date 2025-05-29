@@ -1,4 +1,5 @@
 from base64 import b64decode, b64encode
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
@@ -29,7 +30,9 @@ endpoint = config.endpoint
 
 
 @router.post("/x3dh/signed_prekey_push")
-async def signed_prekey_push(data: SignedPrekeyPush = Depends(SignedPayload.unwrap(SignedPrekeyPush))):
+async def signed_prekey_push(
+    data: Annotated[SignedPrekeyPush, Depends(SignedPayload.unwrap(SignedPrekeyPush))],
+):
     logger.debug(data)
     with Session(engine) as session:
         user = session.exec(select(User).where(User.username == data.username)).first()
@@ -58,7 +61,9 @@ async def signed_prekey_push(data: SignedPrekeyPush = Depends(SignedPayload.unwr
 
 
 @router.post("/x3dh/otp_prekey_push")
-async def otp_prekey_push(data: OtpPrekeyPush = Depends(SignedPayload.unwrap(OtpPrekeyPush))):
+async def otp_prekey_push(
+    data: Annotated[OtpPrekeyPush, Depends(SignedPayload.unwrap(OtpPrekeyPush))],
+):
     logger.debug(data)
     with Session(engine) as session:
         user = session.exec(select(User).where(User.username == data.username)).first()
@@ -77,7 +82,11 @@ async def otp_prekey_push(data: OtpPrekeyPush = Depends(SignedPayload.unwrap(Otp
 
 
 @router.post("/x3dh/prekey_bundle", response_model=PrekeyBundleResponse)
-async def get_prekey_bundle(data: GetPrekeyBundleRequest = Depends(SignedPayload.unwrap(GetPrekeyBundleRequest))):
+async def get_prekey_bundle(
+    data: Annotated[
+        GetPrekeyBundleRequest, Depends(SignedPayload.unwrap(GetPrekeyBundleRequest))
+    ],
+):
     logger.debug("Fetching prekey bundle for user: %s", data.target_username)
     with Session(engine) as session:
         user = session.exec(
@@ -131,9 +140,12 @@ async def get_prekey_bundle(data: GetPrekeyBundleRequest = Depends(SignedPayload
 
 @router.post(
     "/x3dh/grab_return_messages", response_model=GrabReturnMessages
-) 
+)
 async def grab_return_messages(
-    data: GrabReturnMessagesRequest = Depends(SignedPayload.unwrap(GrabReturnMessagesRequest)),
+    data: Annotated[
+        GrabReturnMessagesRequest,
+        Depends(SignedPayload.unwrap(GrabReturnMessagesRequest)),
+    ],
 ):
     logger.debug("Grabbing initial messages for user: %s", data.username)
     with Session(engine) as session:
