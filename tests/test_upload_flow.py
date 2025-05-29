@@ -20,6 +20,8 @@ client = TestClient(app)
 TEST_USERNAME = "testuser"
 TEST_FILE_PATH = Path("test_file.txt")
 
+SUCCESS = 200
+TOO_MANY_REQUESTS = 429
 
 @pytest.fixture(scope="session")
 def private_key():
@@ -91,7 +93,7 @@ def test_file_upload(private_key, file_uuid, test_file):
     signed_payload = sign_payload(upload_payload, private_key)
     response = client.post("/files/upload", json=signed_payload)
 
-    assert response.status_code == 200
+    assert response.status_code == SUCCESS
     assert response.json().get("message", "").lower().startswith("file uploaded")
 
 
@@ -102,7 +104,7 @@ def test_file_download(private_key, file_uuid, test_file):
 
     response = client.post("/files/download", json=signed_payload)
 
-    assert response.status_code == 200
+    assert response.status_code == SUCCESS
 
     download_path = Path(f"downloaded_{test_file.name}")
     download_path.write_bytes(response.content)
@@ -117,5 +119,5 @@ def test_file_download_rate_limit(private_key, file_uuid):
 
     responses = [client.post("/files/download", json=signed_payload) for _ in range(20)]
 
-    rate_limited = any(resp.status_code == 429 for resp in responses)
+    rate_limited = any(resp.status_code == TOO_MANY_REQUESTS for resp in responses)
     assert rate_limited, "Expected at least one rate-limited (429) response"
