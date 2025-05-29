@@ -27,8 +27,9 @@ class PrekeyBundleResponse(SerdeBase):
 class ReturnMessage(SerdeBase):
     sharer_identity_key_public: str
     sharer_ephemeral_key_public: str
+    sharer_username: str
     otp_hash: str
-    encrypted_dek: str
+    encrypted_message: str
 
 
 class GrabReturnMessagesRequest(SerdeBase):
