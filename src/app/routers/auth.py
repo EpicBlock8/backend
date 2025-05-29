@@ -1,4 +1,5 @@
 import base64
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
@@ -18,7 +19,11 @@ config = load_config()
 endpoint = config.endpoint
 
 @router.post("/auth/register")
-async def register(data: RegisterAccount = Depends(SignedPayload.unwrap_no_checks(RegisterAccount))):
+async def register(
+    data: Annotated[
+        RegisterAccount, Depends(SignedPayload.unwrap_no_checks(RegisterAccount))
+    ],
+):
     """
     input: master password
     derive: master chief using argon2id
