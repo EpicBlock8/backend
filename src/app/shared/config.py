@@ -41,11 +41,17 @@ class Endpoint(BaseModel):
     # ws_client: str
     ...
 
+class RateLimit(BaseModel):
+    requests_per_second: int
+    timeout_period: int
+
 
 class Network(BaseModel):
     host: str
     port: int
     reload: bool
+
+    rate_limit: RateLimit
 
 
 class Config(BaseModel):

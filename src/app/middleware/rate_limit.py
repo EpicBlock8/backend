@@ -6,9 +6,11 @@ from fastapi import HTTPException, Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 
 from app.models.requests import SignedPayload
-from app.shared import Logger
+from app.shared import Config, Logger, load_config
 
 logger = Logger(__name__).get_logger()
+config: Config = load_config()
+config_rate_limit = config.network.rate_limit
 
 T = TypeVar("T")
 
@@ -19,7 +21,13 @@ class RateLimit(BaseHTTPMiddleware):
     Compares against IP and username.
     """
 
-    def __init__(self, app, dispatch=None, max_per_second=15, timeout_period_s=60):
+    def __init__(
+        self,
+        app,
+        dispatch=None,
+        max_per_second=config_rate_limit.requests_per_second,
+        timeout_period_s=config_rate_limit.timeout_period,
+    ):
         super().__init__(app, dispatch)
 
         # Params
