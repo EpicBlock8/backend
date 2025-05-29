@@ -86,7 +86,7 @@ async def upload_file(
 
         # Save file to disk
         try:
-            with open(file_path, "wb") as f:
+            with file_path.open("wb") as f:
                 f.write(file_content)
             logger.info("File saved to: %s", file_path)
         except Exception as e:
