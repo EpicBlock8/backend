@@ -4,8 +4,8 @@ from .serde_base import SerdeBase
 from .signed_payload import SignedPayload
 from .x3dh import (
     GetPrekeyBundleRequest,
-    GrabReturnMessagesRequest,
     GrabReturnMessages,
+    GrabReturnMessagesRequest,
     OtpPrekeyPush,
     PrekeyBundleResponse,
     SignedPrekeyPush,
@@ -14,8 +14,8 @@ from .x3dh import (
 __all__ = [
     "DownloadFileRequest",
     "GetPrekeyBundleRequest",
-    "GrabReturnMessagesRequest",
     "GrabReturnMessages",
+    "GrabReturnMessagesRequest",
     "OtpPrekeyPush",
     "PrekeyBundleResponse",
     "RegisterAccount",

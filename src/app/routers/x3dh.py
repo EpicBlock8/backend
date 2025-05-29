@@ -9,11 +9,11 @@ from app.models.requests import SignedPayload
 from app.models.requests.x3dh import (
     GetPrekeyBundleRequest,
     GrabReturnMessages,
-    ReturnMessage,
+    GrabReturnMessagesRequest,
     OtpPrekeyPush,
     PrekeyBundleResponse,
+    ReturnMessage,
     SignedPrekeyPush,
-    GrabReturnMessagesRequest,
 )
 from app.models.schema import MessageStore, Otp, PrekeyBundle, User
 from app.shared import Logger, load_config
