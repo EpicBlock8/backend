@@ -5,6 +5,7 @@ from fastapi import (
 )
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.middleware import RateLimit
 from app.routers import get_routers
 from app.shared import Logger, load_config
 
@@ -32,6 +33,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.add_middleware(RateLimit)
 
 
 # ================================================================================
