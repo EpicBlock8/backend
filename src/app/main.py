@@ -26,6 +26,10 @@ for router in get_routers():
 
 origins = ["*"]
 
+# Add RateLimit middleware first
+app.add_middleware(RateLimit)
+
+# Add CORS middleware after rate limiting
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -33,8 +37,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-app.add_middleware(RateLimit)
 
 
 # ================================================================================
