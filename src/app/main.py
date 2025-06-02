@@ -59,6 +59,8 @@ def main(argv=None):
         host=config.network.host,
         port=config.network.port,
         reload=config.network.reload,
+        ssl_certfile="ca/cert.pem",
+        ssl_keyfile="ca/key.pem",
     )
 
 
