@@ -13,7 +13,7 @@ from app.models.requests import (
     UploadFileRequest,
     UploadFileResponse,
 )
-from app.models.requests.files import DeleteFileRequest, ShareFileRequest
+from app.models.requests.files import DeleteFileRequest, RevokeFileRequest, RevokeFileResponse, ShareFileRequest
 from app.models.schema import File, FileShare, MessageStore, User
 from app.shared import Logger, load_config
 from app.shared.db import engine
@@ -240,6 +240,7 @@ async def share_file(
                 # Re-enable access if previously revoked
                 existing_share.revoked = False
                 session.add(existing_share)
+                session.commit()
                 logger.info(
                     "Re-enabled access for %s to file %s", data.recipient_username, data.file_uuid
                 )
@@ -255,10 +256,101 @@ async def share_file(
                 recipient_username=data.recipient_username,
             )
             session.add(new_file_share)
+            session.commit()
             logger.info("Created new file share record for %s", data.recipient_username)
 
     return JSONResponse(content={"message": "File shared successfully"})
 
+
+@router.post("/files/revoke_file")
+async def revoke_file(
+    data: Annotated[RevokeFileRequest, Depends(SignedPayload.unwrap(RevokeFileRequest))],
+):
+    logger.debug(
+        "Revocation request for file %s from %s to %s", data.file_uuid, data.sharer_username, data.revoked_username
+    )
+    
+    with Session(engine) as session:
+        # Verify sharer exists
+        sharer = session.exec(
+            select(User).where(User.username == data.sharer_username)
+        ).first()
+        if not sharer:
+            raise HTTPException(
+                status_code=404, detail=f"Sharer {data.sharer_username} not found" 
+            )
+
+        # Verify revoked user exists
+        revoked = session.exec(
+            select(User).where(User.username == data.revoked_username)
+        ).first()
+        if not revoked:
+            raise HTTPException(
+                status_code=404, detail=f"Revoked {data.revoked_username} not found"
+            )
+
+        # Verify file exists and sharer owns it
+        file = session.exec(select(File).where(File.uuid == data.file_uuid)).first()
+        if not file:
+            raise HTTPException(
+                status_code=404, detail=f"File with UUID {data.file_uuid} not found"
+            )
+
+        if file.owner_username != data.sharer_username:
+            raise HTTPException(
+                status_code=403,
+                detail=f"User {data.sharer_username} does not own file {data.file_uuid}",
+            )
+
+        logger.info(
+            "File verification passed: %s owned by %s", file.file_name, data.sharer_username
+        )
+
+        # Check to make sure the user being revoked currently has access to this file
+        existing_share = session.exec(
+            select(FileShare).where(
+                FileShare.file_uuid == data.file_uuid,
+                FileShare.recipient_username == data.revoked_username,
+            )
+        ).first()
+
+        if existing_share and not existing_share.revoked:
+            existing_share.revoked = True
+            session.add(existing_share)
+            session.commit()
+            
+            logger.info(
+                "Revoked access for %s to file %s", data.revoked_username, data.file_uuid
+            )
+        else:
+            raise HTTPException(
+                status_code=400, detail=f"User {data.revoked_username} does not have access to this file"
+            )
+            
+        # Update the encrypted contents of the now-revoked file
+        try:
+            file_content = base64.b64decode(data.file_content_b64)
+            file_size = len(file_content)
+            logger.info(
+                "Decoded %s bytes from Base64 input for file: %s", file_size, file.uuid
+            )
+        except Exception as e:
+            logger.error("Failed to decode Base64 content: %s", e)
+            raise HTTPException(status_code=400, detail="Invalid Base64 content") from e
+
+        file_path = uploads_dir / f"{data.file_uuid}"
+
+        # Save file to disk
+        try:
+            with open(file_path, "wb") as f:
+                f.write(file_content)
+            logger.info("File saved to: %s", file_path)
+        except Exception as e:
+            logger.error("Failed to save file to disk: %s", e)
+            raise HTTPException(status_code=500, detail="Failed to save file") from e
+        
+    
+    return RevokeFileResponse(message="File revoked successfully")
 
 @router.post("/files/delete")
 async def delete_file(
