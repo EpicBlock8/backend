@@ -28,6 +28,17 @@ class ShareFileResponse(SerdeBase):
     message: str
 
 
+class RevokeFileRequest(SerdeBase):
+    sharer_username: str
+    revoked_username: str
+    file_uuid: str
+    file_content_b64: str
+
+
+class RevokeFileResponse(SerdeBase):
+    message: str
+
+
 class UploadFileResponse(SerdeBase):
     message: str
     file_uuid: str
