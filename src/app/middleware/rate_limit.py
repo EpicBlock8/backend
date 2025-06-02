@@ -52,11 +52,23 @@ class RateLimit(BaseHTTPMiddleware):
         try:
             assert request.client is not None
 
+            # Skip rate limiting for OPTIONS requests (CORS preflight)
+            if request.method == "OPTIONS":
+                return await call_next(request)
+
             self.__now = monotonic()
             self.__check_ip(request.client.host)
-            self.__check_user(
-                SignedPayload.model_validate(await request.json()).username
-            )
+
+            # Only check user rate limiting for requests that have JSON bodies
+            if request.method in ["POST", "PUT", "PATCH"]:
+                try:
+                    self.__check_user(
+                        SignedPayload.model_validate(await request.json()).username
+                    )
+                except Exception:
+                    # If we can't parse JSON or extract username, just skip user rate limiting
+                    # IP rate limiting will still apply
+                    pass
 
             return await call_next(request)
         except HTTPException as e:
