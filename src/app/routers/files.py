@@ -1,5 +1,5 @@
 import base64
-from datetime import datetime
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Annotated
 
@@ -29,6 +29,21 @@ endpoint = config.endpoint
 uploads_dir = Path(config.paths.files)
 uploads_dir.mkdir(exist_ok=True)
 logger.info("Files will be stored in: %s", uploads_dir.absolute())
+
+# Add helper to verify and resolve file paths safely
+def get_safe_file_path(file_uuid: str) -> Path:
+    """
+    Returns a safe resolved file path under uploads_dir, preventing path traversal.
+    """
+    file_path = uploads_dir / file_uuid
+    base_dir = uploads_dir.resolve()
+    resolved_path = file_path.resolve()
+    try:
+        resolved_path.relative_to(base_dir)
+    except ValueError:
+        logger.error("Invalid file path detected: %s", file_path)
+        raise HTTPException(status_code=400, detail="Invalid file path")
+    return resolved_path
 
 
 @router.post("/files/upload", response_model=UploadFileResponse)
@@ -67,7 +82,7 @@ async def upload_file(
 
         # Decode Base64 file content
         try:
-            file_content = base64.b64decode(data.file_content_b64)
+            file_content = base64.b64decode(data.file_content_b64, validate=True)
             file_size = len(file_content)
             logger.info(
                 "Decoded %s bytes from Base64 input for file: %s", file_size, data.file_name
@@ -76,8 +91,42 @@ async def upload_file(
             logger.error("Failed to decode Base64 content: %s", e)
             raise HTTPException(status_code=400, detail="Invalid Base64 content") from e
 
+        # Check file size limits
+        max_file_size = config.files.max_file_size
+        if file_size > max_file_size:
+            logger.warning(
+                "File %s (%s bytes) exceeds maximum file size (%s bytes)", 
+                data.file_name, file_size, max_file_size
+            )
+            raise HTTPException(
+                status_code=413, 
+                detail=f"File size {file_size} bytes exceeds maximum allowed size of {max_file_size} bytes"
+            )
+
+        # Check total user storage limit
+        max_total_storage = config.files.max_total_user_storage
+        current_storage = session.exec(
+            select(File.size).where(File.owner_username == data.username)
+        ).all()
+        total_current_storage = sum(size for size in current_storage if size is not None)
+        
+        if total_current_storage + file_size > max_total_storage:
+            logger.warning(
+                "User %s storage (%s bytes) + new file (%s bytes) exceeds total storage limit (%s bytes)",
+                data.username, total_current_storage, file_size, max_total_storage
+            )
+            raise HTTPException(
+                status_code=413,
+                detail=f"Adding this file would exceed your storage limit. Current: {total_current_storage} bytes, Limit: {max_total_storage} bytes"
+            )
+
+        logger.info(
+            "Size checks passed for %s: file size %s bytes, user total storage %s bytes", 
+            data.username, file_size, total_current_storage
+        )
+
         # Create file path using UUID
-        file_path = uploads_dir / f"{data.uuid}"
+        file_path = get_safe_file_path(data.uuid)
 
         # Save file to disk
         try:
@@ -93,7 +142,7 @@ async def upload_file(
             uuid=data.uuid,
             file_name=data.file_name or "unknown",
             size=file_size,
-            date_created=datetime.utcnow(),
+            date_created=datetime.now(UTC),
             owner_username=data.username,
         )
 
@@ -169,7 +218,7 @@ async def download_file(
             )
 
         # Check if file exists on disk
-        file_path = uploads_dir / f"{data.uuid}"
+        file_path = get_safe_file_path(data.uuid)
         if not file_path.exists():
             logger.error("File not found on disk: %s", file_path)
             raise HTTPException(status_code=404, detail="File not found on disk")
@@ -329,7 +378,7 @@ async def revoke_file(
             
         # Update the encrypted contents of the now-revoked file
         try:
-            file_content = base64.b64decode(data.file_content_b64)
+            file_content = base64.b64decode(data.file_content_b64, validate=True)
             file_size = len(file_content)
             logger.info(
                 "Decoded %s bytes from Base64 input for file: %s", file_size, file.uuid
@@ -338,7 +387,7 @@ async def revoke_file(
             logger.error("Failed to decode Base64 content: %s", e)
             raise HTTPException(status_code=400, detail="Invalid Base64 content") from e
 
-        file_path = uploads_dir / f"{data.file_uuid}"
+        file_path = get_safe_file_path(data.file_uuid)
 
         # Save file to disk
         try:
@@ -401,7 +450,7 @@ async def delete_file(
             )
 
         # Check if file exists on disk
-        file_path = uploads_dir / f"{data.uuid}"
+        file_path = get_safe_file_path(data.uuid)
         if not file_path.exists():
             logger.error("File not found on disk: %s", file_path)
             raise HTTPException(status_code=404, detail="File not found on disk")
