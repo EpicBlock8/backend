@@ -30,6 +30,21 @@ uploads_dir = Path(config.paths.files)
 uploads_dir.mkdir(exist_ok=True)
 logger.info("Files will be stored in: %s", uploads_dir.absolute())
 
+# Add helper to verify and resolve file paths safely
+def get_safe_file_path(file_uuid: str) -> Path:
+    """
+    Returns a safe resolved file path under uploads_dir, preventing path traversal.
+    """
+    file_path = uploads_dir / file_uuid
+    base_dir = uploads_dir.resolve()
+    resolved_path = file_path.resolve()
+    try:
+        resolved_path.relative_to(base_dir)
+    except ValueError:
+        logger.error("Invalid file path detected: %s", file_path)
+        raise HTTPException(status_code=400, detail="Invalid file path")
+    return resolved_path
+
 
 @router.post("/files/upload", response_model=UploadFileResponse)
 async def upload_file(
@@ -111,7 +126,7 @@ async def upload_file(
         )
 
         # Create file path using UUID
-        file_path = uploads_dir / f"{data.uuid}"
+        file_path = get_safe_file_path(data.uuid)
 
         # Save file to disk
         try:
@@ -203,7 +218,7 @@ async def download_file(
             )
 
         # Check if file exists on disk
-        file_path = uploads_dir / f"{data.uuid}"
+        file_path = get_safe_file_path(data.uuid)
         if not file_path.exists():
             logger.error("File not found on disk: %s", file_path)
             raise HTTPException(status_code=404, detail="File not found on disk")
@@ -372,7 +387,7 @@ async def revoke_file(
             logger.error("Failed to decode Base64 content: %s", e)
             raise HTTPException(status_code=400, detail="Invalid Base64 content") from e
 
-        file_path = uploads_dir / f"{data.file_uuid}"
+        file_path = get_safe_file_path(data.file_uuid)
 
         # Save file to disk
         try:
@@ -435,7 +450,7 @@ async def delete_file(
             )
 
         # Check if file exists on disk
-        file_path = uploads_dir / f"{data.uuid}"
+        file_path = get_safe_file_path(data.uuid)
         if not file_path.exists():
             logger.error("File not found on disk: %s", file_path)
             raise HTTPException(status_code=404, detail="File not found on disk")
