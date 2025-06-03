@@ -37,6 +37,11 @@ class Paths(BaseModel):
     files: str
 
 
+class Files(BaseModel):
+    max_file_size: int = 104857600  # 100 MB default
+    max_total_user_storage: int = 1073741824  # 1 GB default
+
+
 class Endpoint(BaseModel):
     # ws_client: str
     ...
@@ -58,6 +63,7 @@ class Config(BaseModel):
     general: General
     database: Database
     paths: Paths
+    files: Files
     logging: Logging
     endpoint: Endpoint
     network: Network

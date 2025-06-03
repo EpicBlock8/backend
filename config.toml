@@ -20,6 +20,11 @@ level = "DEBUG"
 logs = "logs"
 files = "uploads"
 
+[files]
+# File size limits in bytes
+max_file_size = 104857600  # 100 MB
+max_total_user_storage = 1073741824  # 1 GB
+
 [endpoint]
 # ws_client = "/client_endpoint"
 
