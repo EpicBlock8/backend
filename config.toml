@@ -35,5 +35,6 @@ port = 8000
 reload = true
 
 [network.rate_limit]
-requests_per_second = 15
 timeout_period = 60
+user_rate_limit = 15
+ip_rate_limit = 150

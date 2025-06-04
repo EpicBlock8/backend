@@ -25,21 +25,23 @@ class RateLimit(BaseHTTPMiddleware):
         self,
         app,
         dispatch=None,
-        max_per_second=config_rate_limit.requests_per_second,
         timeout_period_s=config_rate_limit.timeout_period,
+        user_rate_limit=config_rate_limit.user_rate_limit,
+        ip_rate_limit=config_rate_limit.ip_rate_limit,
     ):
         super().__init__(app, dispatch)
 
         # Params
-        self.__max_per_second = max_per_second
         self.__timeout_period_s = timeout_period_s
-
-        self.__func = None
 
         # Checks
         self.__ip: dict[str, deque[float]] = {}
         self.__user: dict[str, deque[float]] = {}
         self.__timeout_club: dict[str, float] = {}
+
+        # Limits
+        self.__ip_rate_limit: int = ip_rate_limit
+        self.__user_rate_limit: int = user_rate_limit
 
         # Time
         self.__now = monotonic()
@@ -75,12 +77,12 @@ class RateLimit(BaseHTTPMiddleware):
             return Response(status_code=e.status_code)
 
     def __check_ip(self, ip: str):
-        self.__check(self.__ip, ip)
+        self.__check(self.__ip, ip, self.__ip_rate_limit)
 
     def __check_user(self, user: str):
-        self.__check(self.__user, user)
+        self.__check(self.__user, user, self.__user_rate_limit)
 
-    def __check(self, bucket: dict, key: str):
+    def __check(self, bucket: dict, key: str, limit: int):
         # record the connection timestamp
         # if property is in timeout; then reject
         # lazyily prune old records
@@ -96,7 +98,7 @@ class RateLimit(BaseHTTPMiddleware):
         while self.__now - queue[0] > 1:
             queue.popleft()
 
-        if len(queue) > self.__max_per_second:
+        if len(queue) > limit:
             self.__timeout(key)
             raise HTTPException(status_code=429, detail="Too many requests.")
 
