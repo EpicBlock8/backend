@@ -26,22 +26,17 @@ class RateLimit(BaseHTTPMiddleware):
         app,
         dispatch=None,
         timeout_period_s=config_rate_limit.timeout_period,
-        user_rate_limit=config_rate_limit.user_rate_limit,
-        ip_rate_limit=config_rate_limit.ip_rate_limit,
+        max_per_second=config_rate_limit.requests_per_second,
     ):
         super().__init__(app, dispatch)
 
         # Params
+        self.__max_per_second = max_per_second
         self.__timeout_period_s = timeout_period_s
 
         # Checks
         self.__ip: dict[str, deque[float]] = {}
-        self.__user: dict[str, deque[float]] = {}
         self.__timeout_club: dict[str, float] = {}
-
-        # Limits
-        self.__ip_rate_limit: int = ip_rate_limit
-        self.__user_rate_limit: int = user_rate_limit
 
         # Time
         self.__now = monotonic()
@@ -61,26 +56,12 @@ class RateLimit(BaseHTTPMiddleware):
             self.__now = monotonic()
             self.__check_ip(request.client.host)
 
-            # Only check user rate limiting for requests that have JSON bodies
-            if request.method in ["POST", "PUT", "PATCH"]:
-                try:
-                    self.__check_user(
-                        SignedPayload.model_validate(await request.json()).username
-                    )
-                except Exception:
-                    # If we can't parse JSON or extract username, just skip user rate limiting
-                    # IP rate limiting will still apply
-                    pass
-
             return await call_next(request)
         except HTTPException as e:
             return Response(status_code=e.status_code)
 
     def __check_ip(self, ip: str):
-        self.__check(self.__ip, ip, self.__ip_rate_limit)
-
-    def __check_user(self, user: str):
-        self.__check(self.__user, user, self.__user_rate_limit)
+        self.__check(self.__ip, ip, self.__max_per_second)
 
     def __check(self, bucket: dict, key: str, limit: int):
         # record the connection timestamp

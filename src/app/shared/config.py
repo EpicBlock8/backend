@@ -47,9 +47,8 @@ class Endpoint(BaseModel):
     ...
 
 class RateLimit(BaseModel):
+    requests_per_second: int
     timeout_period: int
-    user_rate_limit: int
-    ip_rate_limit: int
 
 
 class Network(BaseModel):
