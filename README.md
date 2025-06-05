@@ -1,7 +1,5 @@
 # Cryptographic File Sharing Server
 
-*This is just AI slop*
-
 A FastAPI server for secure file sharing with cryptographic operations.
 
 This project is set up using Python, FastAPI, and UV for package management.
